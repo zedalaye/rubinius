@@ -678,8 +678,8 @@ class Array
 
         if two
           finish = Type.coerce_to two, Fixnum, :to_int
-          raise ArgumentError, "argument too big" if finish < 0 && start < finish.abs
           return self if finish < 1       # Nothing to modify
+          raise ArgumentError, "argument too big" if finish < 0 && start < finish.abs
 
           finish = start + finish - 1
         end
