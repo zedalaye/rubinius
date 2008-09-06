@@ -458,10 +458,22 @@ class Module
         raise TypeError, "wrong argument type #{mod.class} (expected Module)"
       end
 
-      next if ancestors.include? mod
+      if mod == self
+        raise ArgumentError, "cyclic include detected"
+      end
 
-      mod.send(:append_features, self)
-      mod.send(:included, self)
+      if ancestors.include? mod
+        ancestor = superclass_chain.find do |m|
+          m.module == mod if m.kind_of?(IncludedModule)
+        end
+        ancestor.module.included_modules.each do |included_mod|
+          included_mod.send(:append_features, ancestor)
+          included_mod.send(:included, ancestor)
+        end
+      else
+        mod.send(:append_features, self)
+        mod.send(:included, self)
+      end
     end
   end
 
