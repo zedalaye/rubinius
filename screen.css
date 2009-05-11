@@ -1,0 +1,41 @@
+html {font-size: 75%;}
+body {font-size: 1em; font-family: "Lucida Grande", Helvetica, Verdana, Arial, sans-serif; margin: 0; padding: 0;}
+img {border: none;}
+.clear {clear: both;}
+
+/* main layout */
+
+#container {width: 100%; padding: 0px;}
+#header {background-color: #333; color: #fff;}
+#nav {background-color: #000;}
+#nav-items {width: 800px; padding: 10px 10px 5px; margin-left: auto; margin-right: auto;}
+#nav-items a, #header a:visited {color: #9cf; text-decoration: none; padding: 0px 4px;}
+#nav-items a:hover, #header a:visited:hover {text-decoration: underline;}
+#branding {padding: 20px 0px; margin-right: auto; margin-left: auto; width: 800px;}
+#site-title {font-family: Georgia, Tahoma, serif; font-size: 6em; font-weight: normal; letter-spacing: 0.1em; margin-top: 20px;}
+#site-subtitle {font-family: Georgia, Tahoma, serif; color: #999; font-size: 1.75em; font-style: normal; letter-spacing: 0.1em; margin-left: 4px;}
+#site-download {float: right; background-color: #fff; padding: 20px; margin-top: -20px;}
+#site-download a, #site-download a:visited {color: #369;}
+#content {padding: 20px 20px 40px 20px; margin-right: auto; margin-left: auto; width: 800px;}
+#footer {color: #999; background-color: #fff; border-top: 1px solid #999; font-size: 0.8em;}
+#footer ul {margin-right: auto; margin-left: auto; width: 800px; padding: 10px 10px 20px;}
+#footer li {float: left; padding-right: 6px; list-style-image: none; list-style-type: none;}
+#footer li.align-right {float: right; padding-right: 0px;}
+#site-links {color: #f5cbcb; font-size: 90%; margin: 0; position: absolute; right: 0; top: 20px;}
+#site-links a, #site-links a:visited {color: #000;}
+#site-links a:hover, #site-links a:visited:hover {text-decoration: none;}
+#site-links strong a, #site-links strong a:visited {text-decoration: none;}
+
+
+/* Typography */
+
+h1 {font-family: Verdana, Arial, sans-serif; font-size: 3em; font-style: normal; font-weight: normal; color: #333;}
+h2 {font-size: 2em; font-style: normal; font-weight: normal; margin-top: 2em;}
+h3 {font-size: 1.6em; font-style: normal; font-weight: bold; margin-top: 2em; color: #666;}
+h4 {font-size: 1.2em; font-style: normal; font-weight: bold; margin-top: 2em; margin-bottom: 0em; color: #333;}
+h5 {}
+h6 {}
+p {margin: 20px 0px;}
+strong {;}
+em {color: #666; font-style: normal; margin-top: 0em;}
+code {font-family: Courier, monospace; font-size: 1.25em; color: #000; background-color: #efefef; margin: 20px; padding: 10px; display: block;}

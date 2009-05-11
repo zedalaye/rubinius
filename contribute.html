@@ -1,0 +1,166 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html lang='en-us' xmlns='http://www.w3.org/1999/xhtml'>
+<head>
+<title>Contribute</title>
+<link href="screen.css" media="screen" rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+<div id="container">
+
+  <div id="header">
+    <div id="nav">
+      <div id="nav-items">
+        <a href="index.html">Home</a><span class="separator">
+        | </span><a href="community.html">Community</a><span class="separator">
+        | </span><strong>Contribute</strong><span class="separator">
+        | </span><a href="documentation.html">Documentation</a><span class="separator">
+        | </span><a href="download.html">Download</a><span class="separator">
+      </div>
+    </div>
+    <div id="branding">
+      <div id="site-title">Rubinius</div>
+
+<div id="site-subtitle">Ruby, the Way It Was Meant To Be</div>
+
+<div id="site-download"><a href="http://github.com/evanphx/rubinius/tree/master"><img src="http://74.217.48.135/assets/2/down_24.png" alt="download git" /> Download with git</a></div>
+    </div>
+  </div>
+
+  <div id="content">
+    <h1>Contributing To Rubinius</h1>
+
+
+	<p>Yep, it is a VM. Yep, terms like "compiler", "polymorphic cache" and "pneumatic stegosaurus" get thrown around from time to time and it may seem like a very complex undertaking.</p>
+
+
+	<p>But it is also Ruby, and there are many areas&mdash;like the Core and Standard libraries&mdash;that are completely stegosaur-proof.</p>
+
+
+	<p>Mainly it is just a fun project and everyone is likely to find something interesting to do. You do not have to be a compiler wiz to work on it but you might end up one. If you <span class="caps">ARE</span> a compiler wiz, maybe you do not want to ever write library code again. Perhaps you want to understand Ruby itself better. Heck, maybe you think the website is iffy and want to make it shiny!</p>
+
+
+	<p>So hop in!</p>
+
+
+	<p>And when you find that something interesting, send in the documentation patch, the spec, the missing or fixed Socket method or the quantum anti-saurian device. You can commit code only occasionally if you are short on time or go hog-wild; you can concentrate on a narrow area or dabble in everything.</p>
+
+
+	<p>Anything that you contribute is greatly appreciated! You are warmly invited to just hang out and write some code. Starting with the commit policy, more on which below, there is no "core team" or in-crowd it all works out pretty nicely.</p>
+
+
+	<p>If you are interested and just not quite sure where you might find a good place to start, there are two pretty good options:</p>
+
+
+	<p>Take a Ruby application or library of your own (or just one that you frequently use whether Stdlib or a gem) and try to run it. At this point it is probably still more likely than not that you will find some feature that is not completely supported. This opens the path of writing specs for the missing or broken feature so that it is documented and specified&mdash;and then you can try to fix it. Sometimes it turns out the issue runs a bit too deep to solve as a first stab but that is OK. At that point you will have an idea of how things fit together, you have probably found some areas of interest, collected some questions and so on.</p>
+
+
+	<p>Run the specs and see which ones still fail or are completely missing. This gives an excellent starting point particularly if you are looking for something fairly short to start with.</p>
+
+
+	<p>For more information and all kinds of documentation, see the <a href="http://rubinius.lighthouseapp.com/projects/5089-rubinius/overview">Rubinius Lighthouse page</a> and the <a href="http://rubini.us/download">Download</a> page.</p>
+
+
+	<h2>Commit Policy</h2>
+
+
+	<p>Writing code and participating should be fun, not an exercise in perseverance. Stringent commit polices, for whatever their other qualities may bring, also mean longer turnaround times.</p>
+
+
+	<p>For these and host of other reasons, anyone who submits a patch for some part of the Rubinius project and has the patch accepted will be given commit rights to the mainline repository. The Wiki, linked above, has more information about the easiest way to go about that first patch.</p>
+
+
+	<h2>Mailing List and <span class="caps">IRC</span></h2>
+
+
+	<ul>
+	<li>irc://irc.freenode.net/#rubinius</li>
+		<li>http://groups.google.com/group/rubinius-dev</li>
+	</ul>
+
+
+	<p><span class="caps">IRC</span> is the primary way that Rubinius developers communicate with each other. Yes, we know it is the 21st century now, but give it a try. It is even at this late date the best means of communication for a large distributed project. <span class="caps">IRC</span> clients are available for any imaginable OS. If it can access the Internet, it has an <span class="caps">IRC</span> client. More on <span class="caps">IRC</span>, a list of clients and a <a href="http://github.com/evanphx/rubinius/blob/master/doc/community.txt">nick list can be found here</a>. <a href="http://donttreadonme.co.uk/rubinius-irc"><span class="caps">IRC</span> logs are also available</a>.</p>
+
+
+	<p>If you cannot (or prefer not to) use <span class="caps">IRC</span>, feel free to ask questions or submit patches via the mailing list as well. The mailing list IS relatively quiet currently because of the heavy emphasis on <span class="caps">IRC</span> but rest assured, you will get an answer on the ML as well.</p>
+
+
+	<p>If you are just starting with Rubinius feel free to ask for help! We try to make sure that there is documentation available and someone will always be able to answer questions–all we ask in return is that you bring an inquisitive mind and are willing to do proactively poke around the code or research otherwise also.</p>
+
+
+	<h2>Bug Reports, Build Problems etc.</h2>
+
+
+	<p>The ticketing interface is hosted on Lighthouse and there are some guidelines there to help get the most out of it. Ideally you can also drop by <span class="caps">IRC</span> or e-mail the mailing list but this is by no means required.</p>
+
+
+	<p>When reporting a problem, please describe your system in detail, including operating system version, <span class="caps">CPU</span> architecture, and the exact error output.</p>
+
+
+	<h3>Continuous Integration</h3>
+
+
+	<p>In order to keep pace with the constant development, Rubinius uses a continuous integration process. After every change you make to the codebase, run bin/mspec ci to verify that no existing code is adversely affected by it (i.e. broken or "regressed")</p>
+
+
+	<h2>Getting The Code</h2>
+
+
+	<p>The Rubinius project uses <a href="http://git.or.cz/">git</a> for version control (ed. note: in fact, we like to take credit for starting the move towards git in the larger Ruby community! Granted, that Linus fellow and his video broadcast might have helped a bit. &mdash;rue.) <a href="http://github.com/evanphx/rubinius/blob/master/doc/using_git.txt">This page</a> describes how to install and use git as well as the typical workflow for Rubinius specifically.</p>
+
+
+	<h2>Writing Specs</h2>
+
+
+	<p>Specs are always most welcome: you can write one here and there or spec an entire library at once, or you can augment and fix existing ones. They can be a nice bite-sized introduction to Rubinius development.</p>
+
+
+	<p>The Rubinius project uses <a href="http://en.wikipedia.org/wiki/Behavior_driven_development"><span class="caps">BDD</span></a> executable specifications to specify and verify the implementation. <a href="http://rspec.rubyforge.org/">RSpec</a> is of course the originator of the entire <span class="caps">BDD</span> concept and the most widely used spec library at this time but its codebase uses the most advanced of Ruby features which make it a poor fit for developing a Ruby implementation. The main ideas of RSpec are easy to implement using much simpler code, though, so a small syntactically compatible application called MSpec was written for that purpose.</p>
+
+
+	<p>Rubinius is intended to be a fully compliant implementation of version 1.8.x of the Ruby language as implemented by the standard ruby interpreter usually referred to as MatzRuby or <span class="caps">MRI</span> to distinguish the implementation (the executable program) from what can be considered the language itself.</p>
+
+
+	<p>For this purpose, the Rubinius spec suite covers as of this writing just shy of 22,500 expectations (roughly equivalent to assertions) in all areas from Ruby language features and its library classes to components of the VM and supporting modules. It is the largest set of language specifications for Ruby and is currently being used by JRuby, IronRuby and other alternative Ruby implementations as well.</p>
+
+
+	<p>It is also, surprisingly, a very undaunting task. Writing specs is one of the simplest and most convenient ways of participating in the project&mdash;all the while helping the larger Ruby ecosystem by making sure it has a clear specification for the first time!</p>
+
+
+	<p>Full documentation for anything and everything to do with the specs is be found in the Rubinius wiki. A good place to start is the <a href="http://github.com/evanphx/rubinius/blob/master/doc/rubinius_specs.txt">organization overview</a>.</p>
+
+
+	<p>The specs are formed using an extremely simple <span class="caps">DSL</span> in plain Ruby code, in the form of specifications (or expectations) of what should happen when a certain piece of code is run. See the Wiki for more detailed information but here is a small (incomplete) example:</p>
+
+
+<pre>
+<code>
+  describe "Array#push given one argument" do
+    it "appends the argument to the array" do
+      a = [ "a", "b", "c" ]
+      a.push("d")
+      a.should == ["a", "b", "c", "d"]
+    end
+
+    it "returns self" do
+      a = [ "a", "b", "c" ]
+      a.push("d").equal?(a).should == true
+    end
+  end
+</code>
+</pre>
+
+	<p>As you can see, first a written specification is given, then the code to reproduce the situation is run and lastly the expectation is verified. If our Array#push implementation was broken, this would cause a spec failure to be reported.</p>
+  </div>
+
+  <div id="footer">
+    <ul>
+  <li>Copyright © 2007-2008 <a href="http://blog.fallingsnow.net/">Evan Phoenix</a>.</li>
+  <li>Distributed under the <a href="http://en.wikipedia.org/wiki/BSD_license#Terms">BSD license</a>.</li>
+  <li class="align-right"><a href="http://www.engineyard.com"><img src="assets/4/engineyardproject_logo.png"  alt='Engine Yard Project' /></a></li>
+</ul>
+  </div>
+
+</div>
+</body>
+</html>
