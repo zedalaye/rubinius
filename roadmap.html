@@ -1,0 +1,187 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html lang='en-us' xmlns='http://www.w3.org/1999/xhtml'>
+<head>
+<title>Rubinius - Roadmap</title>
+<link href="screen.css" media="screen" rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+<div id="container">
+
+  <div id="header">
+    <div id="nav">
+      <div id="nav-items">
+        <a href="index.html">Home</a><span class="separator">
+        | </span><strong>Roadmap</strong><span class="separator">
+        | </span><a href="community.html">Community</a><span class="separator">
+        | </span><a href="contribute.html">Contribute</a><span class="separator">
+        | </span><a href="documentation.html">Documentation</a><span class="separator">
+        | </span><a href="download.html">Download</a><span class="separator">
+      </div>
+    </div>
+    <div id="branding">
+      <div id="site-title">Rubinius</div>
+
+<div id="site-subtitle">Ruby, the Way It Was Meant To Be</div>
+
+<div id="site-download"><a href="http://github.com/evanphx/rubinius/tree/master"><img src="http://74.217.48.135/assets/2/down_24.png" alt="download git" /> Download with git</a></div>
+    </div>
+  </div>
+
+  <div id="content">
+
+  <h1>Roadmap</h1>
+
+    <p>This document provides current status and goals for Rubinius. The scope of the
+    roadmap is the features that will be the focus of development for the next
+    three months: May, June, and July.</p>
+
+    <p>The roadmap is part of a extended 1.0RC process where we focus on running
+    real-world applications, deployments, and assisting package maintainers to
+    build packages for major OS distributions.</p>
+
+    <p>The sections below explain the roadmap by answering these
+    questions:</p>
+
+    <ul>
+      <li>Where are we? (Status)</li>
+      <li>What do we need to accomplish? (Goals)</li>
+      <li>How do we get there? (Steps)</li>
+    </ul>
+
+
+  <h2>I. Status</h2>
+
+    <p>Since June 2008, Rubinius has had all of the major infrastructure components
+    rewritten or enhanced. The VM was rewritten in C++. The mature generation
+    garbage collector is now based on the Immix mark-region collector. The C-API
+    layer has been rewritten. The VM execution model has been changed from
+    stackless (spaghetti stack model) to using the "C stack" in a mor conventional
+    way when calling Ruby methods. The VM switched from using a green-thread model
+    to using a 1:1 native thread model.</p>
+
+    <p>The careful use of C++ has significantly improved the overall architecture and
+    the consistency between the VM code and the Ruby code. The infrastructure
+    changes were made to provide a more solid foundation for the continued
+    performance and feature compatibility work.</p>
+
+
+  <h2>II. Goals</h2>
+
+    <p>There are three primary goals for this roadmap:</p>
+
+    <ul>
+      <li>Compatibility (C)</li>
+      <li>Performance (P)</li>
+      <li>Code Quality (Q)</li>
+    </ul>
+
+    <p>We focus on compatibility rather than "completeness" because the goal is to
+    run real-world code. The RubySpec project is attempting to provide a
+    progressively more complete measure of completeness, but that process is
+    fairly open-ended. The metric for compatibility is successfully running
+    people's applications.</p>
+
+    <p>The focus for performance work is parity with MRI 1.8.6. Rubinius is already
+    faster, sometimes significantly faster, than MRI on micro-benchmarks but is
+    often slower than MRI running applications. Most of the performance work has
+    been done on the infrastructure (i.e. the core VM execution speed and the
+    performance of the garbage collector). The next work will focus on the JIT and
+    the algorithmic performance of the core library.</p>
+
+    <p>The focus on code quality is to make the code more accessible and to assist
+    contributors so the pace of development can be accelerated. Part of code
+    quality is better documentation for the VM and garbage collector. Another part
+    is an improved build system to make packaging Rubinius easier, or even just
+    checking out the code and experimenting with it.</p>
+
+
+  <h2>III. Steps</h2>
+
+    <p>The following are specific areas that we will focus on under the broad C, P, Q
+    goals detailed above. The steps are categorized according to the main Rubinius
+    components. The goals are listed in () after the item if appropriate. The JIT
+    items are all focused on performance (P).</p>
+
+  <ol>
+    <li>Core Library
+      <ol>
+        <li>Fix failures in main classes, especially Kernel, Module, Numeric (C, Q)</li>
+        <li>Algorithmic peformance of Array, String, Regexp (Q, P)</li>
+        <li>Use cuckoo algorithm for Hash (P)</li>
+        <li>Convert MethodTable to a primary class and use cuckoo algorithm (P)</li>
+        <li>Rewrite kernel/loader.rb (Q)</li>
+      </ol>
+    </li>
+    <li>FFI
+      <ol>
+        <li>Collect FFI specs into RubySpec</li>
+        <li>Conform Rubinius FFI to MRI gem (C, Q)</li>
+      </ol>
+    </li>
+    <li>C-API
+      <ol>
+        <li>Implement RHASH to the extent feasible (C)</li>
+        <li>Convert Syck/YAML to work with Rubinius (C, P)</li>
+      </ol>
+    </li>
+    <li>JIT
+      <ol>
+        <li>Simple translator from bytecode to LLVM IR</li>
+        <li>Background JIT thread</li>
+        <li>Primitive inlining phase 1 based on Type feedback
+          <ol>
+            <li>tuple and bytearray primitives emitted as IR directly</li>
+          </ol>
+        </li>
+        <li>FFI inlining</li>
+        <li>Simple method inlining
+          <ol>
+            <li>No blocks, one return, no exception handlers</li>
+          </ol>
+        </li>
+        <li>Buildup knowledge for inliner
+          <ol>
+            <li>Experiment with code quality produced by using LLVM inliner directly</li>
+            <li>LLVM passes aware of CallFrame semantics</li>
+          </ol>
+        </li>
+      </ol>
+    </li>
+    <li>Compiler
+      <ol>
+        <li>Remove s-expression step (P, Q)</li>
+        <li>Rework parser into a C-API extension (P, Q)</li>
+        <li>Rework AST generation (P, Q)</li>
+        <li>Move all Node classes into separate files (Q)</li>
+      </ol>
+    </li>
+    <li>Build System
+      <ol>
+        <li>Convert to using Tap (Q)</li>
+        <li>Add configuration task (Q)</li>
+        <li>Simplify build tasks (Q)</li>
+        <li>Investigate/refactor field_extract.rb (Q)</li>
+      </ol>
+    </li>
+    <li>Packaging
+      <ol>
+        <li>Framework on OS X</li>
+        <li>Macports package</li>
+        <li>Ubuntu package</li>
+      </ol>
+    </li>
+  </ol>
+
+  </div>
+  <div id="footer">
+    <ul>
+  <li>Copyright © 2007-2008 <a href="http://blog.fallingsnow.net/">Evan Phoenix</a>.</li>
+  <li>Distributed under the <a href="http://en.wikipedia.org/wiki/BSD_license#Terms">BSD license</a>.</li>
+  <li class="align-right"><a href="http://www.engineyard.com"><img src="assets/4/engineyardproject_logo.png"  alt='Engine Yard Project' /></a></li>
+</ul>
+  </div>
+
+</div>
+</body>
+</html>
