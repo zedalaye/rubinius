@@ -104,14 +104,22 @@
     components. The goals are listed in () after the item if appropriate. The JIT
     items are all focused on performance (P).</p>
 
+    <p>Items are <del>crossed out</del> as they are completed. Notes added to
+    items are in <em>emphasized</em> text.</p>
+
   <ol>
     <li>Core Library
       <ol>
         <li>Fix failures in main classes, especially Kernel, Module, Numeric (C, Q)</li>
         <li>Algorithmic peformance of Array, String, Regexp (Q, P)</li>
-        <li>Use cuckoo algorithm for Hash (P)</li>
-        <li>Convert MethodTable to a primary class and use cuckoo algorithm (P)</li>
-        <li>Rewrite kernel/loader.rb (Q)</li>
+        <li><del>Use cuckoo algorithm for Hash (P)</del> <em>Extensive
+          investigation of several Hash algorithms showed that the existing
+          chained bucket implementation performed best overall. Some
+          improvements to the existing algorithm have been made and are being
+          integrated.</em></li>
+        <li><del>Convert MethodTable to a primary class and use cuckoo algorithm (P)</del>
+        <em>Using a modified chained bucket implementation initially.</em></li>
+        <li><del>Rewrite kernel/loader.rb (Q)</del></li>
       </ol>
     </li>
     <li>FFI
@@ -122,14 +130,16 @@
     </li>
     <li>C-API
       <ol>
-        <li>Implement RHASH to the extent feasible (C)</li>
-        <li>Convert Syck/YAML to work with Rubinius (C, P)</li>
+        <li><del>Implement RHASH to the extent feasible (C)</del> <em>A
+          compatibility header file providing st.c functions and some RHASH
+          macros has been added to the Rubinius C-API code.</em></li>
+        <li><del>Convert Syck/YAML to work with Rubinius (C, P)</del></li>
       </ol>
     </li>
     <li>JIT
       <ol>
-        <li>Simple translator from bytecode to LLVM IR</li>
-        <li>Background JIT thread</li>
+        <li><del>Simple translator from bytecode to LLVM IR</del></li>
+        <li><del>Background JIT thread</del></li>
         <li>Primitive inlining phase 1 based on Type feedback
           <ol>
             <li>tuple and bytearray primitives emitted as IR directly</li>
