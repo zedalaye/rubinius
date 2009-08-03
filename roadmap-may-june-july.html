@@ -12,7 +12,7 @@
     <div id="nav">
       <div id="nav-items">
         <a href="index.html">Home</a><span class="separator">
-        | </span><strong>Roadmap</strong><span class="separator">
+        | </span><a href="roadmap.html">Roadmap</a><span class="separator">
         | </span><a href="http://bench.rubini.us">Benchmarks</a><span class="separator">
         | </span><a href="community.html">Community</a><span class="separator">
         | </span><a href="contribute.html">Contribute</a><span class="separator">
@@ -31,11 +31,12 @@
 
   <div id="content">
 
-  <h1>Roadmap</h1>
+    <p>This document is provided for historical reference. It served as an
+    outline for the focus of development during May, June, and July 2009.
+    Refer to the <a href="roadmap.html">current roadmap</a> for more
+    information.</p>
 
-    <p>This document provides current status and goals for Rubinius. The scope of the
-    roadmap is the features that will be the focus of development for August
-    and September, 2009.</p>
+  <h1>Roadmap</h1>
 
     <p>The roadmap is part of a extended 1.0RC process where we focus on running
     real-world applications, deployments, and assisting package maintainers to
@@ -53,11 +54,19 @@
 
   <h2>I. Status</h2>
 
-    <p>Since May 2009, Rubinius development has substantially improved aspects
-    of core library compatibility and performance, compatibility of the C-API
-    interface, and implementation of the JIT compiler, including FFI method
-    inlining and some generic Ruby method inlining. Refer to the
-    <a href="roadmap-may-june-july.html">previous roadmap</a> for details.</p>
+    <p>Since June 2008, Rubinius has had all of the major infrastructure components
+    rewritten or enhanced. The VM was rewritten in C++. The mature generation
+    garbage collector is now based on the Immix mark-region collector. The C-API
+    layer has been rewritten. The VM execution model has been changed from
+    stackless (spaghetti stack model) to using the "C stack" in a mor conventional
+    way when calling Ruby methods. The VM switched from using a green-thread model
+    to using a 1:1 native thread model.</p>
+
+    <p>The careful use of C++ has significantly improved the overall architecture and
+    the consistency between the VM code and the Ruby code. The infrastructure
+    changes were made to provide a more solid foundation for the continued
+    performance and feature compatibility work.</p>
+
 
   <h2>II. Goals</h2>
 
@@ -104,42 +113,72 @@
       <ol>
         <li>Fix failures in main classes, especially Kernel, Module, Numeric (C, Q)</li>
         <li>Algorithmic peformance of Array, String, Regexp (Q, P)</li>
+        <li><del>Use cuckoo algorithm for Hash (P)</del> <em>Extensive
+          investigation of several Hash algorithms showed that the existing
+          chained bucket implementation performed best overall. Some
+          improvements to the existing algorithm have been made and are being
+          integrated.</em></li>
+        <li><del>Convert MethodTable to a primary class and use cuckoo algorithm (P)</del>
+        <em>Using a modified chained bucket implementation initially.</em></li>
+        <li><del>Rewrite kernel/loader.rb (Q)</del></li>
       </ol>
     </li>
     <li>FFI
       <ol>
+        <li><del>Collect FFI specs into RubySpec</del> <em>This was done by a
+          contributor to the RubySpec project.</em></li>
         <li>Conform Rubinius FFI to MRI gem (C, Q)</li>
       </ol>
     </li>
     <li>C-API
       <ol>
-        <li>Continue getting essential C extensions to run (C, Q)</li>
-      </ol>
-    </li>
-    <li>Garbage collector
-      <ol>
-        <li>Add compaction to the Immix collector (Q, P)</li>
-        <li>Improve performance of object allocation (Q, P)</li>
-        <li>Implement generic memory facility to eliminate need to iterate
-        entire young heap during collection (Q, P)</li>
+        <li><del>Implement RHASH to the extent feasible (C)</del> <em>A
+          compatibility header file providing st.c functions and some RHASH
+          macros has been added to the Rubinius C-API code.</em></li>
+        <li><del>Convert Syck/YAML to work with Rubinius (C, P)</del></li>
       </ol>
     </li>
     <li>JIT
       <ol>
-        <li>TBD</li>
+        <li><del>Simple translator from bytecode to LLVM IR</del></li>
+        <li><del>Background JIT thread</del></li>
+        <li><del>Primitive inlining phase 1 based on Type feedback</del>
+          <ol>
+            <li><del>tuple and bytearray primitives emitted as IR directly</del></li>
+          </ol>
+        </li>
+        <li><del>FFI inlining</del></li>
+        <li><del>Simple method inlining</del>
+          <ol>
+            <li><del>No blocks, one return, no exception handlers</del></li>
+          </ol>
+        </li>
+        <li><del>Buildup knowledge for inliner</del>
+          <ol>
+            <li><del>Experiment with code quality produced by using LLVM
+              inliner directly</del></li>
+              <li><del>LLVM passes aware of CallFrame semantics</del> <em>Work
+                on this component of the JIT is ongoing</em></li>
+          </ol>
+        </li>
       </ol>
     </li>
     <li>Compiler
       <ol>
-        <li>Complete AST generation refactoring (P, Q)</li>
-        <li>Improve organization of compiler files to enable the compiler te
-        be easily loaded in MRI (Q)</li>
-        <li>Improve compiler performance (P)</li>
+        <li><del>Remove s-expression step (P, Q)</del></li>
+        <li><del>Rework parser into a C-API extension (P, Q)</del></li>
+        <li>Rework AST generation (P, Q)</li>
+        <li>Move all Node classes into separate files (Q)</li>
       </ol>
     </li>
     <li>Build System
       <ol>
-        <li>Rewrite instruction generation (Q)</li>
+        <li><del>Convert to using Tap (Q)</del> <em>This option was
+          investigated and rejected, primarily because of the syntax and
+          complexity of Tap. Tap is an excellent tool, but it is overkill for
+          Rubinius' rather modest needs. The various Rubinius processors (e.g.
+          for generating code for the VM instructions) will first be improved
+          and then scripts written to coordinate their activities.</em></li>
         <li>Add configuration task (Q)</li>
         <li>Simplify build tasks (Q)</li>
         <li>Investigate/refactor field_extract.rb (Q)</li>
