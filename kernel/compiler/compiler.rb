@@ -103,7 +103,6 @@ class Compiler
   def self.compile_file(path, flags=nil, options={})
     process_flags(flags)
 
-    sexp = nil # scoping fun so that +sexp+ isn't restricted to the block below
     if path =~ /\.lrb$/ or options[:lrb]
       # we produce a string that is the code, and then convert it to sexps
       sexp = LiterateRB::to_code(path, :comments => false).to_sexp
