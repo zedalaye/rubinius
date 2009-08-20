@@ -28,6 +28,57 @@ class Compiler
       dynamic_locals[name] = val
     end
   end
+  
+  class LiterateRB
+
+    def self.to_code(file, options); new(file).to_code(options); end
+
+    attr_accessor :file
+    attr_accessor :code
+    attr_accessor :comments
+
+    def initialize(file)
+      @file     = file
+      @code     = []
+      @comments = []
+      @in_code  = false
+
+      parse
+    end
+
+    def to_code(options)
+      coms = @comments.map {|c| !c || c.empty? ? nil : "# #{c}" }
+      coms = [nil] * @code.size unless options[:comments]
+      tree = @code.zip(coms).map {|(a, b)| a || b }.compact
+      tree.join "\n"
+    end
+
+    private
+
+    def parse
+      File.open @file do |file|  # used in keeping memory footprint down
+        file.each_line do |line| # keep it constant space
+          case line
+          when /\s*>(.*)/
+            @code << $1
+            @comments << nil
+          when /\s*\\begin\{code\}\s*/
+            @in_code = true
+          when /\s*\\end\{code\}\s*/
+            @in_code = false
+          else
+            if @in_code
+              @code << line.chomp
+              @comments << nil
+            else
+              @comments << line.chomp
+              @code << nil
+            end
+          end
+        end
+      end
+    end
+  end
 
   def self.process_flags(flags)
     flags.each { |f| Config[f] = true } if flags
@@ -47,9 +98,18 @@ class Compiler
     to_clear.each { |t| stream.delete(t) }
   end
 
-  def self.compile_file(path, flags=nil)
+  ## 
+  # +path+ is either a normal ruby file or a literate ruby file.
+  def self.compile_file(path, flags=nil, options={})
     process_flags(flags)
-    sexp = File.to_sexp(path)
+
+    sexp = nil # scoping fun so that +sexp+ isn't restricted to the block below
+    if path =~ /\.lrb$/ or options[:lrb]
+      # we produce a string that is the code, and then convert it to sexps
+      sexp = LiterateRB::to_code(path, :comments => false).to_sexp
+    else
+      sexp = File.to_sexp(path)
+    end
 
     comp = new(Generator)
     node = comp.into_script(sexp)

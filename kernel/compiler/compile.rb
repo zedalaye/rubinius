@@ -147,6 +147,9 @@ class Compiler
 
   # Internally used by #unified_load. This attempts to load the
   # designated file from a single prefix path.
+  # 
+  # N.B. +rb+ could be a .lrb file, so we have to check for that and
+  # produce an appropriate .rbc file
   def self.single_load(dir, rb, rbc, ext, requiring, options)
     if rb
       return false if requiring and $LOADED_FEATURES.include? rb
@@ -306,6 +309,9 @@ class Compiler
       rb, rbc, ext = nil, path, nil
     elsif path.suffix? '.rb'
       rb, rbc, ext = path, "#{path}c", nil
+    elsif path.suffix? '.lrb'
+      new_path = path.match(/^(.+).lrb$/)[1] + '.rb'
+      rb, rbc, ext = path, "#{new_path}c", nil
     elsif path.suffix? "#{Rubinius::LIBSUFFIX}"
       rb, rbc, ext = nil, nil, path
     else
@@ -331,6 +337,9 @@ class Compiler
       rb, rbc, ext = nil, path, nil
     elsif path.suffix? '.rb'
       rb, rbc, ext = path, "#{path}c", nil
+    elsif path.suffix? '.lrb'
+      new_path = path.match(/^(.+).lrb$/)[1] + '.rb'
+      rb, rbc, ext = path, "#{new_path}c", nil
     elsif path.suffix? "#{Rubinius::LIBSUFFIX}"
       rb, rbc, ext = nil, nil, path
     else
