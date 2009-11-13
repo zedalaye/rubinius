@@ -1,0 +1,572 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html lang='en-us' xmlns='http://www.w3.org/1999/xhtml'>
+<head>
+<title>Rubinius - Download</title>
+<link href="screen.css" media="screen" rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+<div id="container">
+
+  <div id="header">
+    <div id="nav">
+      <div id="nav-items">
+        <a href="index.html">Home</a><span class="separator">
+        | </span><a href="roadmap.html">Roadmap</a><span class="separator">
+        | </span><a href="community.html">Community</a><span class="separator">
+        | </span><a href="contribute.html">Contribute</a><span class="separator">
+        | </span><a href="documentation.html">Documentation</a><span class="separator">
+        | </span><strong>Download</strong><span class="separator">
+      </div>
+    </div>
+    <div id="branding">
+      <div id="site-title">Rubinius</div>
+
+<div id="site-subtitle">Use Ruby &#8482;</div>
+
+<div id="site-download"><a href="http://github.com/evanphx/rubinius/tree/master"><img src="http://74.217.48.135/assets/2/down_24.png" alt="download git" /> Download with git</a></div>
+    </div>
+  </div>
+
+  <div id="content">
+    <h1>0.13</h1>
+
+    <h3>Summary</h3>
+
+    <ul>
+      <li>JIT is now on by default if available!</li>
+      <li>Fixed a number of define_method/lambda/return control flow bugs</li>
+      <li>Add generational GC promotion age tuning</li>
+      <li>Fixed and untagged a number of specs in core classes</li>
+      <li>Fix capi handle retension bug - big performance fix</li>
+      <li>Fixed a few GC crash bugs</li>
+      <li>Updated to Rubygems 1.3.5</li>
+      <li>Add new QueryAgent API</li>
+      <li>Improve young GC performance under heavy pressure</li>
+      <li>Add header inflation and improve capi handles</li>
+      <li>Reimplement catch/throw</li>
+      <li>Reimplement class variables</li>
+      <li>Improve Regexp and Bignum GC interaction</li>
+      <li>Add preliminary support for packed objects - reduces memory usage</li>
+      <li>Loops now heat up a method to control when they're JIT'd</li>
+      <li>Parser fixes ported from 1.8.7</li>
+    </ul>
+
+    <h3>ChangeLog</h3>
+    <pre>
+2009-11-13	Brian Ford <bford@engineyard.com>
+	* Added sha1 hash of all parser+compiler files and cleaned up kernel.rake.
+	* Fixed creating SyntaxError in melbourne on both rbx and mri.
+	* Removed obsolete kernel rake task.
+
+2009-11-13	Charles Comstock <dgtized@gmail.com>
+	* style fix / rename env_or_default to env
+	* dup frozen ENV values using env_or_default helper
+
+2009-11-12	Evan Phoenix <ephoenix@engineyard.com>
+	* Add specs for behavior of return in lambda
+	* Fix how and where a return-in-lambda is caught
+	* Fix whitespace
+	* Trap returns through a define_method {}
+	* Update Module#define_method tags
+	* Fix a few Module#define_method corners
+	* Fix super in a block passed to define_method
+
+2009-11-12	Dirkjan Bussink <d.bussink@gmail.com>
+	* Added rb_const_set to CAPI, but forgot to add it to the header
+	* Ensure that only internally used method is private
+
+2009-11-12	Shugo Maeda <shugo@ruby-lang.org>
+	* Avoid the rounding error of 0.49999999999999994 + 0.5 in Float#round
+
+2009-11-11	Brian Ford <bford@engineyard.com>
+	* Fixed building bigdecimal ext on 64bit.
+	* Some fixes to build on ubuntu 9.10 64bit.
+	* Fixed clamping mode_t in File.
+	* Fixed unnamed splat arg to a method calling super.
+
+2009-11-11	Evan Phoenix <ephoenix@engineyard.com>
+	* Add generation lifetime autotuning
+	* Use extend rather than changing the class to freeze an Array
+	* Update File tags
+	* Port fnmatch over from MRI 1.8.7
+	* Only consider Fixnum errnos in SystemCallError
+
+2009-11-11	David Waite <david@alkaline-solutions.com>
+	* add support for MRI 1.9.x bootstrapping
+
+2009-11-10	Evan Phoenix <ephoenix@engineyard.com>
+	* Update Exception tags
+	* Polish Exception up a little
+	* Update ENV tags
+	* Fix ENV.clear spec
+	* Update Enumerable tags
+	* Detect if <=> is correct in Enumerable#sort
+	* Update Dir tags
+	* Polish a few unfinished corners in Dir
+	* Chang how ENV gets to the FFI functions
+	* Expose FFI functions as private instance methods also
+	* Taint strings coming back over FFI
+	* Update Class tags
+	* Get @method_table and @constants setup entirely in allocate
+	* Fix JIT FFI inliner bug (NULL => nil)
+	* Update builtin constants tags
+	* Add RUBY_COPYRIGHT
+	* Add RUBY_DESCRIPTION
+	* Update Binding tags
+	* Cleanup Binding#eval spec
+	* Update Array tags
+	* Wrap specs that rubinius doesn't support in not_complaint_on
+	* Fix a few last Array spec failures
+	* Update Array#hash tags
+	* Fix recursive Array#hash specs
+	* Update Array tags
+	* Add Peter Bevin's class-becomes-frozen patch
+	* Add Rubinius::Unsafe.set_class, use with caution!
+	* Fix Kernel#methods for immediate values
+
+2009-11-10	Brian Ford <bford@engineyard.com>
+	* Goodbye vm/parser.
+	* Patched up capi spec helper.
+	* MV lib/bin/compile-ng.rb lib/bin/compile.rb
+	* Removed old extension compiler.
+	* Reworked compiling C extensions.
+	* A little cleanup for transforms specs.
+	* Be more discriminating about arguments when checking AST transforms.
+
+2009-11-09	Evan Phoenix <ephoenix@engineyard.com>
+	* Move the flush/closed checks around in IO#reopen
+	* Add extra checks for using ARGF is stdin only mode
+	* Quarantine bad ARGF spec
+	* Update tags for ARGF
+	* Rework ARGF entirely
+	* Fix IO#reopen(path, mode) for closed streams
+	* Have mspec print out a backtrace when it's interrupt in debug
+	* Add 2 missing IO#reopen specs
+	* Fix glibc atanh() exception bug
+
+2009-11-09	Brian Ford <bford@engineyard.com>
+	* Removed unused CompiledMethod exceptions tuple.
+
+2009-11-08	Brian Ford <bford@engineyard.com>
+	* Ported 894eb643d (Pete Bevin's DATA patch) to melbourne.
+	* Check all compiler files for mod times.
+	* Fixed emitting line numbers.
+
+2009-11-07	Brian Ford <bford@engineyard.com>
+	* Removed Context from compiler.
+	* Removed MethodDescription.
+	* Clean up TestGenerator some.
+
+2009-11-06	Brian Ford <bford@engineyard.com>
+	* Removed sexp specs.
+	* Removed custom spec matchers for c-ng and parser.
+	* Removed left over #to_sexp stuff.
+	* Untag all compiler specs.
+	* Remove .name.d files when cleaning external libs.
+	* Generate the correct opcodes.rb.
+	* Moved lib/compiler-ng to lib/compiler.
+	* More hacks but let's just avoid as much confusion as possible.
+	* Requiem for an era: o/~ oh compiler, your sexp expressions... o/~
+	* Totally hack in building C exts with the bootstrapping ruby.
+	* CAUTION: Speed Zone Ahead.
+	* RubyParser: I bid you GOOD DAY, SIR.
+	* A little bit more sanity for kernel.rake (hey, every bit helps!).
+	* Don't try to compile non-existent files.
+	* Fixed uninitialized ivar warnings in c-ng on MRI.
+	* Easier method of loading AST transforms by category.
+	* Bootstrap kernel with c-ng under MRI.
+	* Don't duplicate method names in literals tuple.
+	* Convert ID to Symbol for MRI.
+
+2009-11-06	Evan Phoenix <ephoenix@engineyard.com>
+	* Remove old cruft
+	* Teach GC::scan_object about Tuples specificly
+	* Add -Xgc.immix.debug and streamline immix marking
+	* Fix handle leakage GC issue
+	* Force extconf.rb to link things staticly
+	* Cleanup ObjectMemory::remember_set_ access
+	* Remove Baker::free_objects, not need anymore
+	* Fix how chunks of InflatedHeaders are deleted
+
+2009-11-06	Charles Comstock <dgtized@gmail.com>
+	* Enabled -fPIC for rbx compile in capi specs
+	* fixed compile on gcc 4.4.1 as write requires use of return value
+
+2009-11-05	David Waite <david@alkaline-solutions.com>
+	* Stylistic improvement
+	* Verify if RUBY_ENGINE is set to rbx in melbourne.rb, as MRI 1.9 now defines RUBY_ENGINE
+
+2009-11-05	Brian Ford <bford@engineyard.com>
+	* Make C++ happier.
+
+2009-11-05	Evan Phoenix <ephoenix@engineyard.com>
+	* Make C++ happy
+	* Cleanup MatchData#[]
+	* Add Regexp#names and rdoc to finish 1.9 named capture API
+	* Rewrite class variable support
+	* Ignore any .rbc files that raise IOError
+	* Initialize probe correctly so threads work
+	* Make certain cast_array leaves an Array on the stack
+	* Check the stack depth when invoking ruby methods
+	* GC fix in IO#select
+	* Rollback rubygems tests
+	* Change compiler to use chained exceptions
+	* Add chained exception
+	* Push rubygems back to 1.3.5
+	* Fix whitespace
+	* Fix Object#instance_exec to pass arguments through
+	* Fix protocol for calling #to_a on splat arguments
+	* A number of fixes for Regexp found running rails3
+
+2009-11-04	Markus Prinz <markus.prinz@nuclearsquid.com>
+	* You have to run ./configure before running rake when compiling Rubinius for the first time
+
+2009-11-04	Brian Ford <bford@engineyard.com>
+	* Make Tuple a real class for MRI bridge.
+	* Ensure block args find ::Proc.
+	* Handle loop(&block) in c-ng.
+	* More loop compiler transform specs.
+	* Rename some insn parameters so CompiledMethod#decode works.
+	* Name BlockPass body consistent with Iter, For.
+	* Melbourne must NOT use any MRI symbol machinery (any, ever, ever).
+	* Don't segfault MRI when quarks go wild.
+	* Always build melbourne with debug symbols.
+	* Rename rb_intern used in melbourne to avoid confusion.
+	* Don't use uninitialize line variable (thanks ddub).
+
+2009-11-03	Brian Ford <bford@engineyard.com>
+	* More MRI bridging for c-ng.
+	* Fixed getting Symbols in melbourne under MRI.
+	* Imported iseq and compiled_file to c-ng dir.
+	* Build melbourne for MRI.
+	* Build external libs for parser universal on darwin.
+	* Put melbourne ext for rbx in a subdir.
+	* Added pseudo profiler methods for GC runs.
+
+2009-11-04	David Waite <david@alkaline-solutions.com>
+	* Revert of 47cfec0d61, Snow Leopard builds fail once you specify the arch options for just 32-bit platforms.
+
+2009-11-03	Evan Phoenix <ephoenix@engineyard.com>
+	* Update Rubygems to 1.3.5
+	* Fix Dir["*/foo"] from picking up incorrect files
+	* Fix describe showing things multiple times
+	* Fix operand name so instruction decode is nicer
+	* Fix Regexp management bug
+	* Unshare intellegently, try and fix a strange bug
+	* Try and improve error output flushing
+	* Add signal handlers for segv and quit signals
+	* Expect SIGTERM, so we don't output the term message
+
+2009-11-03	Ezra Zygmuntowicz <ez@engineyard.com>
+	* alias Module#name to Module#__name__ to make amqp work
+
+2009-11-02	Brian Ford <bford@engineyard.com>
+	* Disable find_lost_souls (segfaults iterating eden).
+	* Use 64bit method to get a 64bit value.
+	* Import SDC to c-ng dir.
+	* Revert varint changes to .rbc format. See below.
+
+2009-11-02	Dirkjan Bussink <d.bussink@gmail.com>
+	* Add spec for splat calling to_a on the given argument
+
+2009-11-02	Evan Phoenix <ephoenix@engineyard.com>
+	* Add missing file
+	* Slim down the rb_funcall() call path
+
+2009-10-30	Evan Phoenix <ephoenix@engineyard.com>
+	* Fix memory overwrite condition
+	* Add a better SpinLock and start lock placement
+	* Use 'sh' rather than 'system' so that $? is propagated
+
+2009-10-30	Brian Ford <bford@engineyard.com>
+	* Fixed defined? a.b in c-ng.
+	* Added more defined? compiler specs.
+	* Fixed nested local references in for in c-ng.
+	* Added compiler spec for accessing a local in a nested for.
+	* Fixed compiler specs for jump errors.
+	* Don't drop File.open block for 1.9.
+
+2009-10-30	Charles Comstock <dgtized@gmail.com>
+	* added missing cdstdio for vm/util/bert.hpp
+
+2009-10-30	Dirkjan Bussink <d.bussink@gmail.com>
+	* Some more 1.9 compilation fixes, not completely working yet though
+	* Build fixes so Rubinius can be compiled with 1.9
+
+2009-10-29	Brian Ford <bford@engineyard.com>
+	* Standardize names of generated instruction files.
+	* Rework VM instruction parsing and generation.
+	* Handle jump errors consistently.
+	* More while and rescue compiler specs with break.
+	* Refactor emitting while bytecode.
+	* Removed incorrectly emitting pop_unwind.
+	* Enable c-ng SendInstructionMethod transform by default.
+
+2009-10-29	Evan Phoenix <ephoenix@engineyard.com>
+	* Don't use FD_COPY, I guess Linux doesn't have it.
+	* QueryAgent supports multiple clients, more commands
+	* Remember new Data objects
+	* Fix caching problem on capi String
+	* Linux include fix
+	* Started query agent, mainly just groundwork thus far
+	* Add BERT encoder/decoder for C++
+	* rubinius::bug() API for errors with args
+	* Make RBX_HOST a #define
+	* Report the file has a bad include
+
+2009-10-27	Evan Phoenix <ephoenix@engineyard.com>
+	* Add header inflation and faster capi access
+
+2009-10-27	Dirkjan Bussink <d.bussink@gmail.com>
+	* Add rb_const_set to CAPI
+
+2009-10-26	Evan Phoenix <ephoenix@engineyard.com>
+	* Remove obsolete spec
+	* Convert capi String to use pinned ByteArrays
+	* Implement catch/throw in lower, VM terms
+	* Add RUBY_READONLY_STRING to speed up capi strings
+	* Remove bad Socket#for_fd spec
+	* Improve young GC and add more GC stats
+	* Fix IRB's error reporting
+	* Keep Data objects in-sync with the data they reference
+	* Move VM initialization so it seems config changes
+
+2009-10-23	Brian Lopez <seniorlopez@gmail.com>
+	* add specs for passing negative or zero value length to Zlib::GzipReader#read
+	* add support code for Zlib::GzipReader#read to handle negative length being passed
+	* add missing specs for Zlib::GzipReader#eof? bug
+	* Fix a bug in Zlib::GzipReader#eof? where it would return true even though there was data left in the buffer
+
+2009-10-23	Evan Phoenix <ephoenix@engineyard.com>
+	* Remove Fixnum#<< tag
+	* realloc behavior means copying data, not just mallocing
+
+2009-10-22	Brian Ford <bford@engineyard.com>
+	* Add some debugging to Process.wait spec.
+	* A few style cleanups in capi specs.
+	* Temp tag for Bignum#<< failure on 32-bit.
+	* Remove #children from AST nodes.
+	* Redo mapping eval and vcalls to variables.
+	* Redo mapping method info to Super nodes.
+	* Redo mapping local variable references.
+	* Compiler spec for ensure at method level.
+	* Compiler spec for attrasgn in block argument.
+	* Introduce State to Generator.
+	* Conform compiler specs to c-ng.
+
+2009-10-22	Brian Lopez <seniorlopez@gmail.com>
+	* Add rb_Float and rb_Integer to the capi
+	* "Removed Proc#<sounds_like_dollar_but_starts_with_call>."
+
+2009-10-22	Evan Phoenix <ephoenix@engineyard.com>
+	* Fix argument order in mp_exch
+	* Introduce and use rubinius::bug()
+	* Fix a missing write_barrier call
+	* Merge branch 'packed'
+	* Fix bug related to break running ensures improperly
+	* Add spec for break/ensure interaction
+	* Remove Regexp::cleanup by copying data into managed memory
+	* Remove unneeded Bignum cleanup method
+	* Use the new managed libtommath
+	* Patch libtommath to support managed mp_int's
+
+2009-10-21	Evan Phoenix <ephoenix@engineyard.com>
+	* Make benchmark idomatic ruby
+	* Teach compare about globs
+	* GC performance tweeks
+	* Shortcut ivar access for normal objects
+	* Be sure subclasses inherit Packed info
+
+2009-10-21	Brian Ford <bford@engineyard.com>
+	* Added new String::create with no size. closes #58.
+	* Better capi rb_str_new specs.
+
+2009-10-20	Brian Ford <bford@engineyard.com>
+	* Make sure $stdout is reassigned in :after action.
+	* More defined? fixes for c-ng.
+	* More defined? compiler specs.
+	* More masgn fixes for c-ng.
+	* More masgn compiler specs.
+	* Fix defined? to recognize op_asgn nodes.
+	* Fixed expectations for defined? with assignment expr.
+	* Tags for current compiler failing defined? specs.
+	* Fixed defined? op_asgn_(and|or) in c-ng.
+	* Added compiler specs for defined? op_asgn_(and|or).
+
+2009-10-20	Evan Phoenix <ephoenix@engineyard.com>
+	* Add prelim support for packed object layout
+	* Force llvm-config to be run through the system perl
+
+2009-10-19	Brian Ford <bford@engineyard.com>
+	* Migrate remaining ruby code from stdlib to lib.
+	* Fixed yielding splatted zarray in c-ng.
+	* More fixes for masgn in c-ng.
+	* Simplify masgn output in *a = b cases.
+	* Fixed attrasgn in iter arguments.
+	* Added more masgn compiler specs.
+	* Fix eval locals in c-ng.
+
+2009-10-19	Dirkjan Bussink <d.bussink@gmail.com>
+	* Improve documentation on how to build with llvm enabled
+
+2009-10-19	Simon Harris <haruki.zaemon@gmail.com>
+	* Implemented: Array#sort raises an error if objects can't be compared
+	* SortedSet#hash specs now passing.
+
+2009-10-18	Dirkjan Bussink <d.bussink@gmail.com>
+	* Include config.h in integer to have IS_X8664 available
+
+2009-10-17	Dirkjan Bussink <d.bussink@gmail.com>
+	* Properly use ifndef...
+	* Remove usage of __WORDSIZE in favor of IS_X8664
+
+2009-10-15	Evan Phoenix <ephoenix@engineyard.com>
+	* Reorganize the GIL locking code around fork()
+	* Don't lower the call_count if it's disabled
+	* Add binarytree benchmark
+	* Fix JIT/GC interaction bug - temp fix
+	* Show GC stops as well with -Xgc.show
+	* Fix formatting in Enumerable
+	* Improve performance of String#substring
+	* Reformat knucleotide benchmark
+	* Improve Range code
+
+2009-10-15	Dirkjan Bussink <d.bussink@gmail.com>
+	* Small build fixes for FreeBSD
+
+2009-10-14	Evan Phoenix <ephoenix@engineyard.com>
+	* Bump up loop counts on tier 0 benchmarks
+	* Add shortcuts to compare script
+	* Add graph script
+	* Speed up Array#pop and Array#shift by not resizing
+	* Add Tuple#reverse! as a primitive
+	* Speed up Range#to_a
+	* Add intrinsic detection to the JIT
+
+2009-10-14	Dirkjan Bussink <d.bussink@gmail.com>
+	* Remove check that's useless due to refactoring
+
+2009-10-13	Evan Phoenix <ephoenix@engineyard.com>
+	* Fix nsieve benchmark
+	* Improve simplicity/performance of Kernel#rand
+	* Cleanup interrupt checking, improve JIT debugging output
+	* Teach the JIT about Float comparison operations
+	* Fix compiler literal bug
+	* Add Richards benchmark to tier1
+	* Add simple comparison driver and timing harness
+	* Call exit() if cExit gets to the top of a Thread
+	* Add tierd benchmarks
+
+2009-10-13	Brian Ford <bford@engineyard.com>
+	* Ensure c-ng sets line number for method definitions.
+	* Fixed SendLoop transform for missing block.
+	* Removed useless helper from c-ng.
+	* Handle loop in c-ng.
+	* Ensure temp c-ng adapter sends right line number to parser.
+	* Ported 8cd823bc fix to melbourne.
+
+2009-10-12	Evan Phoenix <ephoenix@engineyard.com>
+	* Reset the cached hash value of a String on modification
+	* Do proper libc function detection
+	* Improve block creation speed
+	* Fix ICs for highly polymorphic usage
+	* Detect and push literal Fixnums as constants
+	* Make Symbol#=== aliased to Kernel#equal? to speed it up
+	* Allow loops to heat up a method for JITing
+
+2009-10-12	Dirkjan Bussink <d.bussink@gmail.com>
+	* Also exclude .so files from llvm packaging
+
+2009-10-11	Brian Ford <bford@engineyard.com>
+	* Fixes for defined? in c-ng.
+	* More compiler defined specs.
+	* Handle eval locals when creating array of local names.
+	* Assign defs receiver local in correct scope.
+	* Added defs spec with local.
+	* Fixed CompiledMethod splat index for unnamed splats.
+	* Fixed Yield to emit yield_stack.
+	* Added #children for SplatWhen.
+	* Fix when AST for a splat.
+	* Set local names, count for Containers (eg Script).
+	* Fixed SClass structure in c-ng.
+
+2009-10-11	Dirkjan Bussink <d.bussink@gmail.com>
+	* Use the proper make on BSD like systems
+
+2009-10-09	Evan Phoenix <ephoenix@engineyard.com>
+	* Add access checks to local usage
+	* Remove old _186.rb cruft
+
+2009-10-09	Brian Ford <bford@engineyard.com>
+	* Temp tags for failing masgn specs.
+	* Added simple #eval specs for locals.
+	* Handle vcalls that are lvars in evals.
+	* Added eval support in c-ng.
+
+2009-10-08	Evan Phoenix <ephoenix@engineyard.com>
+	* Cleanup Arguments
+	* Handle breaking out of a rescue properly
+	* handle .S rule properly
+	* Fix last masgn failures in c-ng
+	* Remove constant folding specs, not going to be used in c-ng
+	* Fix rescue in c-ng, tag because old compiler fails
+	* Speed up using eval to detect a local in a binding
+	* Integrate 2 parser fixes from 1.8
+	* Fixes #44. Copied fix from 1.8.7.
+
+2009-10-08	Dirkjan Bussink <d.bussink@gmail.com>
+	* Add specs and tags for Method#source_location and UnboundMethod#source_location
+	* Also add UnboundMethod#source_location
+	* Move Method#location to Method#source_location
+
+2009-10-08	Brian Ford <bford@engineyard.com>
+	* Added c-ng defined? bytecode for some constant paths.
+	* More defined? specs for constant paths.
+	* Fixed c-ng bytecode for return in an ensure.
+	* Get libxml-ruby gem closer to building.
+	* Added spec for Class.name accessor (LH #773).
+
+2009-10-07	Evan Phoenix <ephoenix@engineyard.com>
+	* Fix defined? in an eval seeing locals properly
+	* Move Rubinius::RUBY_CONFIG to Rubinius::Config, add -h
+	* Initialize LLVM's threading mutexes
+	* Fix how eval locals are detected
+	* Set Rubinius::JIT to nil if not compiled with LLVM
+	* Remove --fast, fix -v showing JIT status
+	* JIT is now on by default, use -Xint to disable it
+
+2009-10-07	Ari Brown <ari@aribrown.com>
+	* Fix TOPLEVEL_BINDING
+	* Merge branch 'master' of git@github.com:evanphx/rubinius
+	* Fix using eval with a binding without a location
+
+2009-10-07	Eero Saynatkari <esaynatkari@attinteractive.com>
+	* Removed obsolete Module#__find_method.
+	* Added more basic doc to kernel/alpha.rb.
+	* Work around compilation issue on OS X 10.5 GCC 4.3.
+	* Size always unsigned.
+
+2009-10-06	Evan Phoenix <ephoenix@engineyard.com>
+	* Fixes #30, Use /bin/date explicitely on BSD and darwin
+	* Fixes #31, suppress printing the version multiple times
+	* Bump the version number
+	* Fix #17 by removing debugging cruft
+	* Detect and handle released build-rev properly
+
+2009-10-06	Jake Douglas <jakecdouglas@gmail.com>
+	* Move Platform into FFI namespace
+    </pre>
+  </div>
+
+  <div id="footer">
+    <ul>
+  <li>Copyright &copy; 2007-2009 <a href="http://blog.fallingsnow.net/">Evan Phoenix</a>.</li>
+  <li>Distributed under the <a href="http://en.wikipedia.org/wiki/BSD_license#Terms">BSD license</a>.</li>
+  <li class="align-right"><a href="http://www.engineyard.com"><img src="assets/4/engineyardproject_logo.png"  alt='Engine Yard Project' /></a></li>
+</ul>
+  </div>
+
+</div>
+</body>
+</html>
