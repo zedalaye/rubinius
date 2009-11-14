@@ -44,12 +44,12 @@
       <li>Fixed a number of define_method/lambda/return control flow bugs</li>
       <li>Add generational GC promotion age tuning</li>
       <li>Fixed and untagged a number of specs in core classes</li>
-      <li>Fix capi handle retension bug - big performance fix</li>
+      <li>Fix capi handle retention bug - big performance fix</li>
       <li>Fixed a few GC crash bugs</li>
       <li>Updated to Rubygems 1.3.5</li>
-      <li>Add new QueryAgent API</li>
+      <li>Add new QueryAgent API (currently supports the BERT protocol)</li>
       <li>Improve young GC performance under heavy pressure</li>
-      <li>Added GC.collect_young and GC.collect_mature pseudo methods to profiler output</li>
+      <li>Added GC.collect_young and GC.collect_mature pseudo-methods to profiler output</li>
       <li>Add header inflation and improve capi handles</li>
       <li>Reimplement catch/throw</li>
       <li>Reimplement class variables</li>
@@ -550,7 +550,6 @@
 
 2009-10-07	Ari Brown <ari@aribrown.com>
 	* Fix TOPLEVEL_BINDING
-	* Merge branch 'master' of git@github.com:evanphx/rubinius
 	* Fix using eval with a binding without a location
 
 2009-10-07	Eero Saynatkari <esaynatkari@attinteractive.com>
@@ -560,7 +559,7 @@
 	* Size always unsigned.
 
 2009-10-06	Evan Phoenix <ephoenix@engineyard.com>
-	* Fixes #30, Use /bin/date explicitely on BSD and darwin
+	* Fixes #30, Use /bin/date explicitly on BSD and darwin
 	* Fixes #31, suppress printing the version multiple times
 	* Bump the version number
 	* Fix #17 by removing debugging cruft
