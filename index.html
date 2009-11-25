@@ -29,6 +29,61 @@
   </div>
 
   <div id="content">
+    <h1>Rubinius 1.0.0RC1 Released!</h1>
+
+    <h2>1. Get the Rubinius source code</h2>
+
+    <p>Download the <a href="http://bit.ly/5q1OQk">1.0.0rc1 tarball</a>
+    OR clone the <a href="http://github.com/evanphx/rubinius">Rubinius github repository</a></p>
+
+    <h2>2. Build Rubinius</h2>
+
+    <p>Decide whether you want to install Rubinius or just use it from the
+    source directory. Also, review 'doc/getting_started.txt' to
+    install the dependencies you need to build Rubinius.<p>
+
+    <p>Rubinius uses <a href="http://llvm.org">LLVM</a> to implement the JIT
+    compiler. LLVM is not yet enabled by default. Rubinius will run fine
+    without the JIT, but you must manually enable LLVM to use the JIT. To
+    enable LLVM, choose the --enable-llvm option in the steps below.</p>
+
+    <h3>2.1 Running from the source directory</h3>
+
+    <p>Run the following commands</p>
+
+    <ol>
+      <li>./configure OR ./configure --enable-llvm</li>
+      <li>rake</li>
+    </ol>
+
+    <h3>2.2 Installing Rubinius</h3>
+
+    <p>Run the following commands</p>
+
+    <ol>
+      <li>./configure --prefix=/path/to/install/dir OR
+      ./configure --enable-llvm --prefix=/path/to/install/dir</li>
+      <li>rake install</li>
+      <li>Put '/path/to/install/dir/bin' in your PATH or symlink the
+      '/path/to/install/dir/dir/bin/rbx' executable somewhere in your PATH</li>
+    </ol>
+
+    <h2>3. Report Issues</h2>
+
+    <p>We've been working hard on Rubinius but we know there will be issues
+    and bugs. We apologize in advance. Please take the time to open a ticket
+    on the <a href="http://github.com/evanphx/rubinius/issues">Rubinius issue
+      tracker</a>. Include your platform info (CPU and operating system), the
+    command you tried to run, and all the output to your terminal.</p>
+
+    <h2>4. Enjoy!</h2>
+
+    <p>We're very excited you're interested in Rubinius. Give us feedback in
+    the IRC channel at #rubinius on freenode.net, via <a
+      href="http://twitter.com/rubinius">Twitter</a> or on the <a
+      href="http://groups.google.com/group/rubinius-dev">mailing list</a>.</p>
+
+
     <h2>What is Rubinius?</h2>
 
 
