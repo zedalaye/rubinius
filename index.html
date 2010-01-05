@@ -29,23 +29,32 @@
   </div>
 
   <div id="content">
-    <h1>Rubinius 1.0.0RC1 Released!</h1>
+    <h1>Rubinius 1.0.0-RC2 Released!</h1>
 
-    <h2>1. Get the Rubinius source code</h2>
+    <h2>1. Get the Rubinius binary or source code</h2>
 
-    <p>Download the <a href="http://bit.ly/5q1OQk">1.0.0rc1 tarball</a>
-    OR clone the <a href="http://github.com/evanphx/rubinius">Rubinius github repository</a></p>
+    <p>Check out the <a href="release-1.0.0-rc2.html">RC2 changes</a>.</p>
+
+    <ul>
+      <li>For OS X 10.6, download <a href="http://bit.ly/7wLo5V">OS X 10.6 package</a>. Install and you're done!</li>
+      <li>For OS X 10.5, download <a href="http://bit.ly/4YyGpT">OS X 10.5 package</a>. Install and you're done!</li>
+      <li>Or download the <a href="http://bit.ly/8bICfm">1.0.0-rc2 tarball</a></li>
+      <li>Or clone the <a href="http://github.com/evanphx/rubinius">Rubinius github repository</a></li>
+    </ul>
 
     <h2>2. Build Rubinius</h2>
+
+    <p>If you installed one of the OS X packages, you don't need to build Rubinius.
+    You can run rubinius by running <b>/usr/local/bin/rbx</b>.</p>
 
     <p>Decide whether you want to install Rubinius or just use it from the
     source directory. Also, review 'doc/getting_started.txt' to
     install the dependencies you need to build Rubinius.<p>
 
     <p>Rubinius uses <a href="http://llvm.org">LLVM</a> to implement the JIT
-    compiler. LLVM is not yet enabled by default. Rubinius will run fine
-    without the JIT, but you must manually enable LLVM to use the JIT. To
-    enable LLVM, choose the --enable-llvm option in the steps below.</p>
+    compiler. LLVM is enabled by default. Rubinius will run fine
+    without the JIT, but you must manually disable LLVM. To
+    disable LLVM, choose the --disable-llvm option in the steps below.</p>
 
     <p>NOTE: You must use MRI 1.8.[6,7] to build Rubinius.
     It will not build with MRI 1.9.1 yet.</p>
@@ -55,7 +64,7 @@
     <p>Run the following commands</p>
 
     <ol>
-      <li>./configure OR ./configure --enable-llvm</li>
+      <li>./configure</li>
       <li>rake</li>
     </ol>
 
@@ -64,8 +73,7 @@
     <p>Run the following commands</p>
 
     <ol>
-      <li>./configure --prefix=/path/to/install/dir OR
-      ./configure --enable-llvm --prefix=/path/to/install/dir</li>
+      <li>./configure --prefix=/path/to/install/dir</li>
       <li>rake install</li>
       <li>Put '/path/to/install/dir/bin' in your PATH or symlink the
       '/path/to/install/dir/dir/bin/rbx' executable somewhere in your PATH</li>

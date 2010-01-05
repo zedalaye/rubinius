@@ -1,0 +1,306 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html lang='en-us' xmlns='http://www.w3.org/1999/xhtml'>
+<head>
+<title>Rubinius - Download</title>
+<link href="screen.css" media="screen" rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+<div id="container">
+
+  <div id="header">
+    <div id="nav">
+      <div id="nav-items">
+        <a href="index.html">Home</a><span class="separator">
+        | </span><a href="roadmap.html">Roadmap</a><span class="separator">
+        | </span><a href="community.html">Community</a><span class="separator">
+        | </span><a href="contribute.html">Contribute</a><span class="separator">
+        | </span><a href="documentation.html">Documentation</a><span class="separator">
+        | </span><strong>Download</strong><span class="separator">
+      </div>
+    </div>
+    <div id="branding">
+      <div id="site-title">Rubinius</div>
+
+<div id="site-subtitle">Use Ruby &#8482;</div>
+
+<div id="site-download"><a href="http://github.com/evanphx/rubinius/tree/master"><img src="http://74.217.48.135/assets/2/down_24.png" alt="download git" /> Download with git</a></div>
+    </div>
+  </div>
+
+  <div id="content">
+    <h1>1.0.0-rc2</h1>
+
+    <h3>Notes</h3>
+    <ul>
+      <li>LLVM and the JIT are enabled by default</li>
+    </ul>
+
+    <h3>Gotchas</h3>
+    <ul>
+      <li>Rails 2.3.5 has been shown to work to a limited degree. You may encounter some problems though.</li>
+    </ul>
+
+    <h3>ChangeLog</h3>
+    <pre>
+Adam Gardiner (5):
+      Add examples for String#% with string args
+      Fix String#% with empty string arg
+      Add control flow attribute to each opcode
+      Get stepping working again for simplest case
+      Move Debugger under Rubinius namespace
+
+Brian Ford (44):
+      Make specs run from rake regardless of install config.
+      Added --show option to help configure debugging.
+      Fix signedness of mark flag.
+      Changed require paths for compiler to avoid RUBYOPT complications.
+      Ensure kernel is recompiled after compiler changes.
+      Fixed installing pre-installed gems.
+      Updated CI frozen specs to RubySpec 06112c74.
+      Comment out super spec that causes compilation failure.
+      Updated CI tags for specs.
+      Updated CI frozen specs to RubySpec 12009c0a.
+      Updated MSpec source to 1521f846.
+      Updated CI tags for new specs.
+      Moved compiler signature file.
+      Removed metaclass.rbc from kernel loading files.
+      Moved spec/frozen to spec/ruby. See below.
+      Updated CI specs to RubySpec 9f5238ef.
+      Added file system helpers to mspec.
+      Use #touch helper in specs.
+      Rewrote File#flock specs.
+      Fixed #rm_r helper to delete links and sockets.
+      Use #rm_r helper in specs.
+      Fixed up IO#gets specs for 1.9.
+      Enable passing multiple files to #rm_r helper.
+      Added #cp helper to mspec.
+      Removed remaining uses of FileUtils in specs.
+      Clean up use of #rm_r helper.
+      Removed nonsense cleanup code from #load specs.
+      Made ./configure --prefix smarter.
+      Tag unstable Enumerator#each spec.
+      More compiler string interpolation specs.
+      Make string interp specs pass.
+      Removed dead compiler code for string interp.
+      Changed compiler specs related to "#{a}". See below.
+      Updated MSpec source to e728be1e.
+      Updated CI specs to RubySpec 6f74a317.
+      Update CI tags for sync'd rubyspecs.
+      Don't put -Wall in rbconfig CFLAGS by default.
+      C-API define LONG_LONG, make rb_str_set_len a function.
+      Added explicit define for HAVE_RB_STR_SET_LEN.
+      Added C-API define for EXTERN. Closes #127.
+      Define X86_ESI_SPEEDUP to put vmm->addresses in esi.
+      Updated CI specs to RubySpec b295a3f5.
+      Fix for Date.strptime with %W from MRI r24500.
+      Update CI tags for merged rubyspecs.
+
+Charles Comstock (1):
+      appease the compiler gods with missing includes for uintptr_t
+
+Dan Kubb (1):
+      Fix Kernel#dup to work on an object with #send undefined. Closes #98.
+
+David Waite (2):
+      Write a new quark implementation in C++ for the compiler Merge bstrlib.h, bstrlib.c into compiler Eliminate code which was generating problems in the bstring compile, as it is not used by the compiler
+      Remove now-unused libbstring, libcchash, libmquark and libptr_array
+
+Dirkjan Bussink (21):
+      String#each_byte can be aliased to String#bytes
+      Remove tags for now passing String#bytes specs
+      Raise ArgumentError of no arguments are given to send instead of segfaulting
+      Add spec to verify ArgumentError is thrown when send is not given any arguments
+      Use System::vm_backtrace properly
+      Return value of attr_reader, attr_writer and attr_accessor should be nil
+      Some small stylistic changes to simplify the expressions
+      Prefer using do / end for multiline blocks
+      Simplify Hash#key?
+      Not only setup segv_handler when on linux, but if execinfo.h is available
+      Enumerator#each_with_index doesn't need a splat
+      Remove tags for Enumerator that pass
+      Change Struct#inspect to use Class#inspect instead of Class#name
+      Remove tags for now passing Struct#inspect and Struct#to_s specs
+      Remove tags for now passing Math specs
+      Remove the hand crafted JIT and move udis86 to vm/external_libs
+      Fix Kernel#instance_variables to correcty work with immediates
+      Add initial version of Kernel#instance_variables spec
+      Cleanup tags for Kernel#instance_variables
+      Fix Date specs
+      More spec fixes because of the new year
+
+Eero Saynatkari (11):
+      configure outputs confirmation.
+      -E does not produce sexp.
+      Add task :todos to do a simple grep for todo marks in kernel/.
+      Added documentation (and some @todos) for ARGF.
+      while true -> loop in argf.rb
+      Oops. Re-enable nil check for ARGF#read, comments for future.
+      Added dummy lib/ffi.rb with note for compatibility.
+      Try handling negative indexes in Array#aset (Michael Neumann.)
+      Improve Array resizing with Tuple shifting (Michael Neumann.)
+      Modify Tuple::lshift_inplace() slightly.
+      Added note about "developer mode" for crash reporter.
+
+Eric Allen (1):
+      Spec for regex Exception coercion
+
+Evan Phoenix (118):
+      Fix Kernel#__send__
+      Change spec for Kernel#send
+      Fix Process.wait and Process.wait2
+      Cleanup Syslog
+      Include sys/types.h because some extentions expect that
+      Add Gem.user_home to the path to look for gems
+      Add rbx specific default_exec_format
+      Cleanup doc
+      Disambiguate lines output
+      Set std::terminate to provide better error message
+      Improve flag and directory usage in building
+      Add -c support
+      Vastly improve "missing end" syntax errors
+      Pull apart the yacc error message, report only the good part
+      Properly handle a block passed to zsuper. Fixes #103.
+      Depend .o files on their own Rakefile
+      Include the string header
+      Revert "while true -> loop in argf.rb"
+      Rework exception handler discovery in the JIT
+      Fix preinstalled gems directory layout (version proof)
+      JIT Refactoring phase 1: No more workhorse
+      Conditionalize the LLVM .cpp files
+      JIT Refactoring 2: extracted compiler driver
+      Remove MachineMethod
+      Fix Module#remote_alias
+      Allow a Class to be created with nil as the superclass
+      Remove old .rbc file from being loaded
+      Print the names of ivars that contain other Nodes
+      Extract assignment properly. Fixes #95.
+      Use chained exceptions for compiler errors
+      Add missing primitive fallback
+      Speed up Marshal a little bit
+      Change when Immix performs a collection
+      Use rotating mark bit rather than unmark_all
+      Add additional Marshal tests
+      Don't remarshal specs, write the existing data
+      Speed up Marshal a little more
+      Add spec for Marshaling a real Float
+      Tag failing Float marshal spec
+      Add string_build instruction, fix string interp.
+      Make sure SHA1 is available. Fixes #92.
+      defined?(super) support, served with a side of crow. Fixes #100.
+      Unmask defined?(super) specs for rubinius
+      Fix a few defined?(super) edge cases
+      More defined?(super) specs
+      C-API and GC fixes found while working on OpenSSL
+      Fix ugly JIT crash bug
+      Remember to remove an ExceptionPoint after it's used!
+      Whitespace fix
+      Improve String#split performance
+      Abstract all uses of ByteArray::bytes
+      Fix invalid method
+      Simplify checking for modification
+      Work around String#unpack bug
+      Add DISABLE_SEGV var so CrashReporter can be used
+      Add zsuper instruction to fix super bugs
+      Uncomment super-in-define_method
+      Update tags on super
+      Fix JIT zsuper scope bug
+      Add Rubinius.method_missing_reason, improve method_missing exception
+      Update language tags
+      Properly handle erasing llvm::Values
+      Refactor Environment/cli.cpp around
+      Use chained exceptions in Type.coerce_to
+      Cleanup Type.coerce_to_comparison
+      Cleanup some jit config options
+      Add -Xjit.log to control where jit debug info goes
+      Cull SendSite and Selector
+      Don't rely on Array#to_s, it's changing. Fixes #120.
+      LLVM is now enabled by default
+      Add |&b| support
+      Fix the MOP. Fixes #37. Passes MOP horror test.
+      Work spec around broken unpack()
+      Refactor String::Unpack into some methods
+      Fix unpack's i and l modes
+      Add better i and l String#unpack specs
+      Remove debugging in spec
+      Change Undefined to undefined.
+      Style cleanup of StringIO
+      Fix FFI numerical edge case
+      Simplify the argument handler usage
+      Add FAKEROOT support to install for packaging
+      Add package:osx to create .pkgs
+      Fix the double strerror() output in the message
+      Reformatting
+      Use FFI to get a file descriptor
+      Fix stale String hash bug
+      Turn off ri and rdoc generation by default
+      Add -s to 'gem install' to show whats going on
+      Precompile all gems that are installed
+      Add stack locals, fix current exception logic
+      Add missing terminator instructions to SDC
+      Make SDC print out the bad iseq if there is a problem
+      Add --force-prebuilt configure option
+      Minor VMMethod cleanup
+      Fix calling singleton_method_added
+      Fix raising TypeError for an immediate metaclass
+      Change format of control flow type in instructions
+      Cleanup a little cruft and incorrect visibilities
+      Read in chunks rather than by line
+      Cleanup opening a metaclass, remove some cruft
+      Shortcut the get-the-metaclass syntax
+      Add ci rake task
+      Add testcase for Regexp#match and $~
+      Fix Regexp#match reseting $~ always
+      Spec style fix
+      Regexp style fixes
+      Use StringValue on the argument to #match
+      Fix rb_obj_freeze, fixes building mongrel
+      Fix Marshal'ing a tuple
+      Remove cruft
+      Add compiler signature/version checking
+      Redo how SystemCallError interacts with it's subclasses
+      Only pass Fixnums through to be become Errno instances
+      Merge branch 'signature'
+      Use a tar.bz2 of llvm source rather than svn
+      Bump version to rc2
+      Fix how installed files are precompiled
+
+Joshua Peek (1):
+      Fixed Regexp#named_captures to return an empty hash when there are no named captures.
+
+Konstantin Haase (1):
+      changed irc nick
+
+Marc-Andre Lafortune (1):
+      array#permutation: Implementation, based on a patch by Matt Daw (issue 131)
+
+Matt Daw (2):
+      Fixes for Struct#eql? and Struct#new.
+      Define HAVE_RB_DEFINE_ALLOC_FUNC for postgres gem.
+
+Wilson Bilkovich (3):
+      Hide a tasty MOP tidbit in the glossary
+      Correct superclass for meta-metaclasses, document MOP
+      Change metaclass() return value back to Class*
+
+Yehuda Katz (4):
+      When immediates are frozen or tainted, they return themselves, not false
+      Fix issue where negative integers were being treated incorrectly in sprintf. This was causing a bug in ActiveSupport.
+      included is called over and over again even if the module was already included (append_features is not)
+      Gives Enumerator #with_index powers
+
+
+    </pre>
+  </div>
+
+  <div id="footer">
+    <ul>
+  <li>Copyright &copy; 2007-2009 <a href="http://blog.fallingsnow.net/">Evan Phoenix</a>.</li>
+  <li>Distributed under the <a href="http://en.wikipedia.org/wiki/BSD_license#Terms">BSD license</a>.</li>
+  <li class="align-right"><a href="http://www.engineyard.com"><img src="assets/4/engineyardproject_logo.png"  alt='Engine Yard Project' /></a></li>
+</ul>
+  </div>
+
+</div>
+</body>
+</html>
