@@ -37,7 +37,7 @@ module Rubinius
     # Writes the CompiledMethod +cm+ to +file+.
     def self.dump(cm, file)
       File.open(file, "w") do |f|
-        new("!RBIX", Rubinius::Signature, "x").encode_to(f, cm)
+        new("!RBIX", Rubinius::Signature, "1").encode_to(f, cm)
       end
     rescue SystemCallError
       # just skip writing the compiled file if we don't have permissions
@@ -53,7 +53,15 @@ module Rubinius
       stream.puts @sum.to_s
 
       mar = CompiledFile::Marshal.new
-      stream << mar.marshal(body)
+      index = CompiledFile::Index.new
+
+      output = mar.marshal(body, index)
+      until index.empty?
+        output.append mar.marshal(index.next(output.size), index)
+      end
+
+      stream << mar.marshal(index)
+      stream << output
     end
 
     ##
@@ -64,6 +72,48 @@ module Rubinius
 
       mar = CompiledFile::Marshal.new
       @data = mar.unmarshal(stream)
+    end
+
+    ##
+    # Manages the index to CompiledMethod instances in a CompiledFile
+
+    class Index
+      class Item
+        attr_accessor :symbol, :cm
+
+        def initialize(symbol, cm)
+          @symbol = symbol
+          @cm = cm
+        end
+      end
+
+      attr_reader :index
+
+      def initialize
+        @methods = []
+        @id = 0
+        @index = {}
+      end
+
+      def next_id
+        :"cm-#{@id += 1}"
+      end
+
+      def add(cm)
+        item = Item.new next_id, cm
+        @methods << item
+        item
+      end
+
+      def empty?
+        @methods.empty?
+      end
+
+      def next(offset)
+        item = @methods.shift
+        @index[item.symbol] = offset
+        item.cm
+      end
     end
 
     ##
@@ -244,7 +294,7 @@ module Rubinius
       ##
       # For object +val+, return a String represetation.
 
-      def marshal(val)
+      def marshal(val, index=nil)
         case val
         when TrueClass
           "t\n"
@@ -285,6 +335,17 @@ module Rubinius
             str.append "#{op}\n"
           end
           str
+        when Index
+          str = "L\n#{val.index.size}\n"
+          val.index.each_pair do |id, n|
+            str.append marshal(id)
+            str.append marshal(n)
+          end
+          str
+        when Index::Item
+          str = "l\n"
+          str.append marshal(val.symbol)
+          str
         when CompiledMethod
           str = "M\n1\n"
           str.append marshal(val.metadata)
@@ -296,6 +357,13 @@ module Rubinius
           str.append marshal(val.required_args)
           str.append marshal(val.total_args)
           str.append marshal(val.splat)
+
+          val.literals.each_with_index do |x, i|
+            if x.kind_of? CompiledMethod
+              val.literals[i] = index.add x
+            end
+          end
+
           str.append marshal(val.literals)
           str.append marshal(val.lines)
           str.append marshal(val.file)
