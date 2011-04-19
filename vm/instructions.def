@@ -1172,7 +1172,14 @@ end
 
 instruction create_block(literal) [ -- block ]
   Object* _lit = call_frame->cm->literals()->at(state, literal);
-  CompiledMethod* cm = as<CompiledMethod>(_lit);
+
+  CompiledMethod* cm;
+  if(LazyExecutable* lazy = try_as<LazyExecutable>(_lit)) {
+    cm = as<CompiledMethod>(lazy->load(state));
+    call_frame->cm->literals()->put(state, literal, cm);
+  } else { 
+    cm = as<CompiledMethod>(_lit);
+  }
 
   // TODO: We do not need to be doing this everytime.
   cm->scope(state, call_frame->static_scope());

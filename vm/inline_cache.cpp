@@ -6,6 +6,7 @@
 #include "builtin/class.hpp"
 #include "builtin/module.hpp"
 #include "builtin/symbol.hpp"
+#include "builtin/lazy_executable.hpp"
 #include "builtin/lookuptable.hpp"
 #include "builtin/executable.hpp"
 #include "builtin/methodtable.hpp"
@@ -98,8 +99,13 @@ namespace rubinius {
               use_module = alias->original_module();
             }
           } else {
+            if(LazyExecutable* lazy = try_as<LazyExecutable>(entry->method())) {
+              use_exec = lazy->load(state);
+            } else {
+              use_exec = entry->method();
+            }
+
             use_module = module;
-            use_exec = entry->method();
           }
 
           if(use_exec) {
@@ -169,7 +175,15 @@ namespace rubinius {
                                            alias->original_module(),
                                            alias->original_exec());
           } else {
-            mce = MethodCacheEntry::create(state, klass, module, entry->method());
+            Executable* exec;
+
+            if(LazyExecutable* lazy = try_as<LazyExecutable>(entry->method())) {
+              exec = lazy->load(state);
+            } else {
+              exec = entry->method();
+            }
+
+            mce = MethodCacheEntry::create(state, klass, module, exec);
           }
 
           if(!vis_entry) vis_entry = entry;

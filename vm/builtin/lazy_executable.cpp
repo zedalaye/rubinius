@@ -4,6 +4,8 @@
 #include "builtin/symbol.hpp"
 #include "builtin/fixnum.hpp"
 
+#include "builtin/thunk.hpp"
+
 #include "dispatch.hpp"
 #include "call_frame.hpp"
 #include "arguments.hpp"
@@ -30,6 +32,11 @@ namespace rubinius {
   Object* LazyExecutable::lazy_executor(STATE, CallFrame* call_frame, Executable* exec,
                                         Module* mod, Arguments& args)
   {
+    // Should we raise an exception or load?
     return Qnil;
+  }
+
+  Executable* LazyExecutable::load(STATE) {
+    return Thunk::create(state, G(object), state->symbol("booya"));
   }
 }

@@ -19,6 +19,7 @@
 #include "builtin/global_cache_entry.hpp"
 #include "builtin/location.hpp"
 #include "builtin/cache.hpp"
+#include "builtin/lazy_executable.hpp"
 
 #include "call_frame.hpp"
 

@@ -27,6 +27,8 @@ namespace rubinius {
     static Object* lazy_executor(STATE, CallFrame* call_frame,
                                  Executable* exec, Module* mod, Arguments& args);
 
+    Executable* load(STATE);
+
     class Info : public Executable::Info {
     public:
       BASIC_TYPEINFO(Executable::Info)
