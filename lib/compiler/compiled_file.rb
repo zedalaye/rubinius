@@ -34,7 +34,7 @@ module Rubinius
     end
 
     ##
-    # Writes the CompiledFile +cm+ to +file+.
+    # Writes the CompiledMethod +cm+ to +file+.
     def self.dump(cm, file)
       File.open(file, "w") do |f|
         new("!RBIX", Rubinius::Signature, "x").encode_to(f, cm)

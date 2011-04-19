@@ -96,6 +96,7 @@ field_extract_headers = %w[
   vm/builtin/call_unit.hpp
   vm/builtin/call_unit_adapter.hpp
   vm/builtin/cache.hpp
+  vm/builtin/lazy_executable.hpp
 ]
 
 ############################################################

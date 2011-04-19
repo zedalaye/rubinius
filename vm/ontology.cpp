@@ -20,6 +20,7 @@
 #include "builtin/float.hpp"
 #include "builtin/io.hpp"
 #include "builtin/iseq.hpp"
+#include "builtin/lazy_executable.hpp"
 #include "builtin/list.hpp"
 #include "builtin/lookuptable.hpp"
 #include "builtin/methodtable.hpp"
@@ -257,6 +258,7 @@ namespace rubinius {
     String::init(this);
     kcode::init(this);
     Executable::init(this);
+    LazyExecutable::init(this);
     CompiledMethod::init(this);
     IO::init(this);
     BlockEnvironment::init(this);

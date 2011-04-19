@@ -13,6 +13,7 @@ configuration.rbc
 dir.rbc
 exception.rbc
 executable.rbc
+lazy_executable.rbc
 false.rbc
 fixnum.rbc
 gc.rbc
