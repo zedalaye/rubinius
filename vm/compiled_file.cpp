@@ -15,10 +15,12 @@
 #include "builtin/staticscope.hpp"
 #include "builtin/compiledmethod.hpp"
 #include "builtin/class.hpp"
+#include "builtin/lazy_executable.hpp"
+#include "builtin/symbol.hpp"
 #include "builtin/thread.hpp"
 
 namespace rubinius {
-  CompiledFile* CompiledFile::load(std::istream& stream) {
+  CompiledFile* CompiledFile::load(std::istream& stream, Symbol* path) {
     std::string magic, sum;
     uint64_t ver;
 
@@ -27,11 +29,18 @@ namespace rubinius {
     stream >> sum;
     stream.get(); // eat the \n
 
-    return new CompiledFile(magic, ver, sum, &stream);
+    return new CompiledFile(magic, ver, sum, path, &stream);
+  }
+
+  CompiledMethod* CompiledFile::load_method(STATE, std::istream& stream, Symbol* path) {
+    UnMarshaller mar(state, path, stream);
+    return as<CompiledMethod>(mar.unmarshal());
   }
 
   Object* CompiledFile::body(STATE) {
-    UnMarshaller mar(state, *stream);
+    UnMarshaller mar(state, path, *stream);
+    LazyExecutable::add_index(state, path, (LookupTable*)mar.unmarshal(), stream->tellg());
+
     return mar.unmarshal();
   }
 

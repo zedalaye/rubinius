@@ -144,7 +144,7 @@ namespace rubinius {
       return Primitives::failure();
     }
 
-    CompiledFile* cf = CompiledFile::load(stream);
+    CompiledFile* cf = CompiledFile::load(stream, state->symbol(path));
     if(cf->magic != "!RBIX") {
       return Primitives::failure();
     }

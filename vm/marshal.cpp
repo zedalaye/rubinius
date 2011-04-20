@@ -16,6 +16,8 @@
 #include "builtin/fixnum.hpp"
 #include "builtin/float.hpp"
 #include "builtin/iseq.hpp"
+#include "builtin/lazy_executable.hpp"
+#include "builtin/lookuptable.hpp"
 #include "builtin/string.hpp"
 #include "builtin/symbol.hpp"
 #include "builtin/tuple.hpp"
@@ -165,6 +167,28 @@ namespace rubinius {
     return cm;
   }
 
+  LazyExecutable* UnMarshaller::get_lazy_executable() {
+    Symbol* name = (Symbol*)unmarshal();
+    return LazyExecutable::create(state, path, name);
+  }
+
+  LookupTable* UnMarshaller::get_index() {
+    LookupTable* index = LookupTable::create(state);
+    Symbol* id;
+    Fixnum* offset;
+
+    size_t count;
+    stream >> count;
+
+    for(size_t i = 0; i < count; i++) {
+      id = (Symbol*)unmarshal();
+      offset = (Fixnum*)unmarshal();
+      index->store(state, id, offset);
+    }
+
+    return index;
+  }
+
   Object* UnMarshaller::unmarshal() {
     char code;
 
@@ -191,6 +215,10 @@ namespace rubinius {
       return get_iseq();
     case 'M':
       return get_cmethod();
+    case 'L':
+      return get_index();
+    case 'l':
+      return get_lazy_executable();
     default:
       std::string str = "unknown marshal code: ";
       str.append( 1, code );

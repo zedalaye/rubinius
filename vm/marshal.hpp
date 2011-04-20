@@ -16,16 +16,22 @@ namespace rubinius {
   class Array;
   class Bignum;
   class Float;
+  class LazyExecutable;
+  class LookupTable;
   class Symbol;
   class Tuple;
 
   class UnMarshaller {
   public:
     STATE;
+    Symbol* path;
     std::istream& stream;
 
-    UnMarshaller(STATE, std::istream& stream) :
-      state(state), stream(stream) { }
+    UnMarshaller(STATE, Symbol* path, std::istream& stream)
+      : state(state)
+      , path(path)
+      , stream(stream)
+    { }
 
     Object* unmarshal();
 
@@ -37,6 +43,8 @@ namespace rubinius {
     Float* get_float();
     InstructionSequence* get_iseq();
     CompiledMethod* get_cmethod();
+    LazyExecutable* get_lazy_executable();
+    LookupTable* get_index();
 
   public:
     class Error {
