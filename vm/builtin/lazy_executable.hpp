@@ -4,20 +4,23 @@ namespace rubinius {
   struct CallFrame;
   class Dispatch;
   class Arguments;
-  class Symbol;
   class Fixnum;
+  class Symbol;
+  class StaticScope;
 
   class LazyExecutable : public Executable {
   public:
     const static object_type type = LazyExecutableType;
 
   private:
-    Symbol* path_;  // slot
-    Symbol* name_;  // slot
+    Symbol* path_;        // slot
+    Symbol* name_;        // slot
+    StaticScope* scope_;  // slot
 
   public:
     attr_accessor(path, Symbol);
     attr_accessor(name, Symbol);
+    attr_accessor(scope, StaticScope);
 
     static void init(STATE);
     static void LazyExecutable::add_index(STATE, Symbol* path,

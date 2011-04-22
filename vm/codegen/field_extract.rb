@@ -855,6 +855,7 @@ class CPPParser
       "Integer" => :Integer,
       "Fixnum" => :Fixnum,
       "MethodContext" => :MethodContext,
+      "Executable" => :Executable,
       "CompiledMethod" => :CompiledMethod,
       "String" => :String,
       "Module" => :Module,

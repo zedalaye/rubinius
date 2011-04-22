@@ -39,6 +39,8 @@
 #include "builtin/bignum.hpp"
 #include "builtin/class.hpp"
 #include "builtin/compactlookuptable.hpp"
+#include "builtin/executable.hpp"
+#include "builtin/lazy_executable.hpp"
 #include "builtin/location.hpp"
 #include "builtin/lookuptable.hpp"
 #include "builtin/symbol.hpp"
@@ -102,7 +104,7 @@ namespace rubinius {
     System::attach_primitive(state,
                              G(rubinius), true,
                              state->symbol("add_defn_method"),
-                             state->symbol("vm_add_method"));
+                             state->symbol("vm_add_defn_method"));
 
     System::attach_primitive(state,
                              G(rubinius), true,
@@ -790,51 +792,55 @@ namespace rubinius {
     return Tuple::from(state, 2, dis.method, dis.module);
   }
 
-  Object* System::vm_add_method(STATE, Symbol* name, CompiledMethod* method,
-                                StaticScope* scope, Object* vis)
+  Object* System::vm_add_defn_method(STATE, Symbol* name, Executable* method,
+                                     StaticScope* scope, Object* vis)
   {
     Module* mod = scope->for_method_definition();
-
-    method->scope(state, scope);
-    method->serial(state, Fixnum::from(0));
     mod->add_method(state, name, method);
 
-    if(Class* cls = try_as<Class>(mod)) {
-      if(!method->internalize(state)) {
-        Exception::argument_error(state, "invalid bytecode method");
-        return 0;
+    if(CompiledMethod* m = try_as<CompiledMethod>(method)) {
+      m->scope(state, scope);
+      m->serial(state, Fixnum::from(0));
+
+      if(Class* cls = try_as<Class>(mod)) {
+        if(!m->internalize(state)) {
+          Exception::argument_error(state, "invalid bytecode method");
+          return 0;
+        }
+
+        object_type type = (object_type)cls->instance_type()->to_native();
+        TypeInfo* ti = state->om->type_info[type];
+        if(ti) {
+          m->specialize(state, ti);
+        }
       }
 
-      object_type type = (object_type)cls->instance_type()->to_native();
-      TypeInfo* ti = state->om->type_info[type];
-      if(ti) {
-        method->specialize(state, ti);
-      }
-    }
+      bool add_ivars = false;
 
-    bool add_ivars = false;
-
-    if(Class* cls = try_as<Class>(mod)) {
-      add_ivars = !kind_of<SingletonClass>(cls) && cls->type_info()->type == Object::type;
-    } else {
-      add_ivars = true;
-    }
-
-    if(add_ivars) {
-      Array* ary = mod->seen_ivars();
-      if(ary->nil_p()) {
-        ary = Array::create(state, 5);
-        mod->seen_ivars(state, ary);
+      if(Class* cls = try_as<Class>(mod)) {
+        add_ivars = !kind_of<SingletonClass>(cls) && cls->type_info()->type == Object::type;
+      } else {
+        add_ivars = true;
       }
 
-      Tuple* lits = method->literals();
-      for(native_int i = 0; i < lits->num_fields(); i++) {
-        if(Symbol* sym = try_as<Symbol>(lits->at(state, i))) {
-          if(RTEST(sym->is_ivar_p(state))) {
-            if(!ary->includes_p(state, sym)) ary->append(state, sym);
+      if(add_ivars) {
+        Array* ary = mod->seen_ivars();
+        if(ary->nil_p()) {
+          ary = Array::create(state, 5);
+          mod->seen_ivars(state, ary);
+        }
+
+        Tuple* lits = m->literals();
+        for(native_int i = 0; i < lits->num_fields(); i++) {
+          if(Symbol* sym = try_as<Symbol>(lits->at(state, i))) {
+            if(RTEST(sym->is_ivar_p(state))) {
+              if(!ary->includes_p(state, sym)) ary->append(state, sym);
+            }
           }
         }
       }
+    } else if(LazyExecutable* m = try_as<LazyExecutable>(method)) {
+      m->scope(state, scope);
     }
 
     vm_reset_method_cache(state, name);
@@ -842,14 +848,17 @@ namespace rubinius {
     return method;
   }
 
-  Object* System::vm_attach_method(STATE, Symbol* name, CompiledMethod* method,
+  Object* System::vm_attach_method(STATE, Symbol* name, Executable* method,
                                    StaticScope* scope, Object* recv) {
+    if(CompiledMethod* m = try_as<CompiledMethod>(method)) {
+      m->scope(state, scope);
+      m->serial(state, Fixnum::from(0));
+    } else if(LazyExecutable* m = try_as<LazyExecutable>(method)) {
+      m->scope(state, scope);
+    }
+
     Module* mod = recv->singleton_class(state);
-
-    method->scope(state, scope);
-    method->serial(state, Fixnum::from(0));
     mod->add_method(state, name, method);
-
     vm_reset_method_cache(state, name);
 
     return method;

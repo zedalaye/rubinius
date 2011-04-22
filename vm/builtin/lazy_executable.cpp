@@ -45,8 +45,10 @@ namespace rubinius {
   }
 
   Executable* LazyExecutable::load(STATE) {
-    LookupTable* index = as<LookupTable>(
+    LookupTable* tbl = as<LookupTable>(
         G(lmethod)->get_const(state, state->symbol("Index")));
+
+    LookupTable* index = as<LookupTable>(tbl->fetch(state, path_));
     native_int base = as<Fixnum>(index->fetch(state, state->symbol("base")))->to_native();
     native_int offset = as<Fixnum>(index->fetch(state, name_))->to_native();
 
@@ -58,6 +60,9 @@ namespace rubinius {
     }
     stream.seekg(base + offset, std::ios::beg);
 
-    return CompiledFile::load_method(state, stream, path_);
+    CompiledMethod* method = CompiledFile::load_method(state, stream, path_);
+    method->scope(state, scope_);
+
+    return method;
   }
 }
