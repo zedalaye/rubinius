@@ -23,8 +23,7 @@ namespace rubinius {
     attr_accessor(scope, StaticScope);
 
     static void init(STATE);
-    static void LazyExecutable::add_index(STATE, Symbol* path,
-                                          LookupTable* index, size_t base);
+    static void LazyExecutable::add_index(STATE, Symbol* path, LookupTable* index);
 
     // Ruby.primitive :lazy_executable_create
     static LazyExecutable* create(STATE, Symbol* path, Symbol* name);

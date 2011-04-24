@@ -341,6 +341,7 @@ module Rubinius
             str.append marshal(id)
             str.append marshal(n)
           end
+          str.append "Z\n"
           str
         when Index::Item
           str = "l\n"

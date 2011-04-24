@@ -39,7 +39,7 @@ namespace rubinius {
 
   Object* CompiledFile::body(STATE) {
     UnMarshaller mar(state, path, *stream);
-    LazyExecutable::add_index(state, path, (LookupTable*)mar.unmarshal(), stream->tellg());
+    LazyExecutable::add_index(state, path, (LookupTable*)mar.unmarshal());
 
     return mar.unmarshal();
   }

@@ -186,6 +186,10 @@ namespace rubinius {
       index->store(state, id, offset);
     }
 
+    // Discard marker
+    stream.get();
+    stream.get();
+
     return index;
   }
 

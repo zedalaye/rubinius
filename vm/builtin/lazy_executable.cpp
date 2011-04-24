@@ -11,6 +11,8 @@
 
 #include "object_utils.hpp"
 
+#include <fcntl.h>
+
 #include <iostream>
 #include <fstream>
 
@@ -22,10 +24,28 @@ namespace rubinius {
     G(lmethod)->set_const(state, "Index", LookupTable::create(state));
   }
 
-  void LazyExecutable::add_index(STATE, Symbol* path, LookupTable* index, size_t base) {
-    index->store(state, state->symbol("base"), Fixnum::from(base));
-    LookupTable* tbl = as<LookupTable>(G(lmethod)->get_const(state, state->symbol("Index")));
-    tbl->store(state, path, index);
+  void LazyExecutable::add_index(STATE, Symbol* path, LookupTable* index) {
+    int fd;
+    if((fd = open(path->c_str(state), O_RDONLY)) >= 0) {
+      size_t count, base = 0;
+      char buf[1024];
+
+      while((count = read(fd, buf, 1024)) > 0) {
+        if(char* p = strstr(buf, "Z\n")) {
+          base += p - buf;
+          break;
+        } else {
+          base += count;
+        }
+      }
+
+      if(base > 0) {
+        index->store(state, state->symbol("base"), Fixnum::from(base+2));
+        LookupTable* tbl = as<LookupTable>(G(lmethod)->get_const(
+                state, state->symbol("Index")));
+        tbl->store(state, path, index);
+      }
+    }
   }
 
   LazyExecutable* LazyExecutable::create(STATE, Symbol* path, Symbol* name) {
