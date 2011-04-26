@@ -4,6 +4,7 @@
 #include "builtin/access_variable.hpp"
 #include "builtin/class.hpp"
 #include "builtin/executable.hpp"
+#include "builtin/lazy_executable.hpp"
 #include "builtin/symbol.hpp"
 #include "builtin/exception.hpp"
 #include "builtin/packed_object.hpp"

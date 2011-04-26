@@ -7,6 +7,7 @@
 #include "builtin/array.hpp"
 #include "builtin/class.hpp"
 #include "builtin/fixnum.hpp"
+#include "builtin/lazy_executable.hpp"
 #include "builtin/symbol.hpp"
 #include "builtin/tuple.hpp"
 #include "builtin/string.hpp"
@@ -208,6 +209,9 @@ namespace rubinius {
 
     while(entry) {
       if(entry->name() == name) {
+        if(LazyExecutable* lazy = try_as<LazyExecutable>(entry->method())) {
+          entry->method(state, lazy->load(state));
+        }
         return entry;
       }
       entry = try_as<MethodTableBucket>(entry->next());

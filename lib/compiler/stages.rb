@@ -85,7 +85,11 @@ module Rubinius
         end
 
         @processor.dump @input, @name
-        @input
+        if defined?(RUBY_ENGINE) && RUBY_ENGINE == 'rbx'
+          Rubinius.invoke_primitive :compiledfile_load, @name, Rubinius::Signature
+        else
+          @input
+        end
       end
     end
 

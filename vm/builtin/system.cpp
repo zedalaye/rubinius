@@ -792,6 +792,48 @@ namespace rubinius {
     return Tuple::from(state, 2, dis.method, dis.module);
   }
 
+  Object* System::vm_prepare_method(STATE, CompiledMethod* method, Module* mod) {
+    if(Class* cls = try_as<Class>(mod)) {
+      if(!method->internalize(state)) {
+        Exception::argument_error(state, "invalid bytecode method");
+        return 0;
+      }
+
+      object_type type = (object_type)cls->instance_type()->to_native();
+      TypeInfo* ti = state->om->type_info[type];
+      if(ti) {
+        method->specialize(state, ti);
+      }
+    }
+
+    bool add_ivars = false;
+
+    if(Class* cls = try_as<Class>(mod)) {
+      add_ivars = !kind_of<SingletonClass>(cls) && cls->type_info()->type == Object::type;
+    } else {
+      add_ivars = true;
+    }
+
+    if(add_ivars) {
+      Array* ary = mod->seen_ivars();
+      if(ary->nil_p()) {
+        ary = Array::create(state, 5);
+        mod->seen_ivars(state, ary);
+      }
+
+      Tuple* lits = method->literals();
+      for(native_int i = 0; i < lits->num_fields(); i++) {
+        if(Symbol* sym = try_as<Symbol>(lits->at(state, i))) {
+          if(RTEST(sym->is_ivar_p(state))) {
+            if(!ary->includes_p(state, sym)) ary->append(state, sym);
+          }
+        }
+      }
+    }
+
+    return method;
+  }
+
   Object* System::vm_add_defn_method(STATE, Symbol* name, Executable* method,
                                      StaticScope* scope, Object* vis)
   {
@@ -801,44 +843,7 @@ namespace rubinius {
     if(CompiledMethod* m = try_as<CompiledMethod>(method)) {
       m->scope(state, scope);
       m->serial(state, Fixnum::from(0));
-
-      if(Class* cls = try_as<Class>(mod)) {
-        if(!m->internalize(state)) {
-          Exception::argument_error(state, "invalid bytecode method");
-          return 0;
-        }
-
-        object_type type = (object_type)cls->instance_type()->to_native();
-        TypeInfo* ti = state->om->type_info[type];
-        if(ti) {
-          m->specialize(state, ti);
-        }
-      }
-
-      bool add_ivars = false;
-
-      if(Class* cls = try_as<Class>(mod)) {
-        add_ivars = !kind_of<SingletonClass>(cls) && cls->type_info()->type == Object::type;
-      } else {
-        add_ivars = true;
-      }
-
-      if(add_ivars) {
-        Array* ary = mod->seen_ivars();
-        if(ary->nil_p()) {
-          ary = Array::create(state, 5);
-          mod->seen_ivars(state, ary);
-        }
-
-        Tuple* lits = m->literals();
-        for(native_int i = 0; i < lits->num_fields(); i++) {
-          if(Symbol* sym = try_as<Symbol>(lits->at(state, i))) {
-            if(RTEST(sym->is_ivar_p(state))) {
-              if(!ary->includes_p(state, sym)) ary->append(state, sym);
-            }
-          }
-        }
-      }
+      System::vm_prepare_method(state, m, mod);
     } else if(LazyExecutable* m = try_as<LazyExecutable>(method)) {
       m->scope(state, scope);
     }

@@ -1,7 +1,9 @@
 #include "builtin/lazy_executable.hpp"
 #include "builtin/class.hpp"
 #include "builtin/lookuptable.hpp"
+#include "builtin/staticscope.hpp"
 #include "builtin/symbol.hpp"
+#include "builtin/system.hpp"
 #include "builtin/fixnum.hpp"
 
 #include "compiled_file.hpp"
@@ -45,6 +47,8 @@ namespace rubinius {
                 state, state->symbol("Index")));
         tbl->store(state, path, index);
       }
+
+      close(fd);
     }
   }
 
@@ -60,7 +64,9 @@ namespace rubinius {
   Object* LazyExecutable::lazy_executor(STATE, CallFrame* call_frame, Executable* exec,
                                         Module* mod, Arguments& args)
   {
-    // Should we raise an exception or load?
+    std::string msg = "attempting to execute a LazyExecutable directly";
+    throw std::runtime_error(msg);
+
     return Qnil;
   }
 
@@ -81,7 +87,10 @@ namespace rubinius {
     stream.seekg(base + offset, std::ios::beg);
 
     CompiledMethod* method = CompiledFile::load_method(state, stream, path_);
+    Module* mod = scope_->for_method_definition();
+    System::vm_prepare_method(state, method, mod);
     method->scope(state, scope_);
+    method->serial(state, serial());
 
     return method;
   }

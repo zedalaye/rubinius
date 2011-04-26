@@ -184,6 +184,8 @@ namespace rubinius {
     // Ruby.primitive :vm_find_method
     static Tuple* vm_find_method(STATE, Object* recv, Symbol* name);
 
+    static Object* vm_prepare_method(STATE, CompiledMethod* method, Module* mod);
+
     // Ruby.primitive :vm_add_defn_method
     static Object* vm_add_defn_method(STATE, Symbol* name, Executable* meth, StaticScope* scope, Object* vis);
 

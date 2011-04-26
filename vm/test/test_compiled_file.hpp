@@ -30,7 +30,7 @@ public:
     std::istringstream stream;
     stream.str("!RBIX\n1\naoeu\nt");
 
-    CompiledFile* cf = CompiledFile::load(stream);
+    CompiledFile* cf = CompiledFile::load(stream, state->symbol("path"));
     TS_ASSERT_EQUALS(cf->magic, std::string("!RBIX"));
     TS_ASSERT_EQUALS(cf->version, 1ULL);
     TS_ASSERT_EQUALS(cf->sum, std::string("aoeu"));
@@ -41,7 +41,7 @@ public:
     std::istringstream stream;
     stream.str("!RBIX\n1\naoeu\nt");
 
-    CompiledFile* cf = CompiledFile::load(stream);
+    CompiledFile* cf = CompiledFile::load(stream, state->symbol("path"));
     TS_ASSERT_EQUALS(cf->body(state), Qtrue);
   }
 
@@ -49,7 +49,7 @@ public:
     std::fstream stream("vm/test/fixture.rbc_");
     TS_ASSERT(!!stream);
 
-    CompiledFile* cf = CompiledFile::load(stream);
+    CompiledFile* cf = CompiledFile::load(stream, state->symbol("path"));
     TS_ASSERT_EQUALS(cf->magic, "!RBIX");
 
     CompiledMethod* cm = try_as<CompiledMethod>(cf->body(state));

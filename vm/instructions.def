@@ -1175,6 +1175,7 @@ instruction create_block(literal) [ -- block ]
 
   CompiledMethod* cm;
   if(LazyExecutable* lazy = try_as<LazyExecutable>(_lit)) {
+    lazy->scope(state, call_frame->static_scope());
     cm = as<CompiledMethod>(lazy->load(state));
     call_frame->cm->literals()->put(state, literal, cm);
   } else { 

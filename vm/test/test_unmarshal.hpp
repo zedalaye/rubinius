@@ -10,7 +10,7 @@ class StringUnMarshaller : public UnMarshaller {
 public:
   std::istringstream sstream;
 
-  StringUnMarshaller(STATE) : UnMarshaller(state, sstream) { }
+  StringUnMarshaller(STATE) : UnMarshaller(state, (Symbol*)Qnil, sstream) { }
 };
 
 class TestUnMarshal : public CxxTest::TestSuite, public VMTest {

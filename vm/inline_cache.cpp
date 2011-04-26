@@ -99,16 +99,15 @@ namespace rubinius {
               use_module = alias->original_module();
             }
           } else {
-            if(LazyExecutable* lazy = try_as<LazyExecutable>(entry->method())) {
-              use_exec = lazy->load(state);
-            } else {
-              use_exec = entry->method();
-            }
-
+            use_exec = entry->method();
             use_module = module;
           }
 
           if(use_exec) {
+            if(LazyExecutable* lazy = try_as<LazyExecutable>(use_exec)) {
+              use_exec = lazy->load(state);
+            }
+
             mce = MethodCacheEntry::create(state, klass, use_module, use_exec);
 
             if(!vis_entry) vis_entry = entry;

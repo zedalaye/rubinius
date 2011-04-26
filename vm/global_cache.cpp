@@ -7,6 +7,7 @@
 #include "vm/objectmemory.hpp"
 #include "vm/builtin/module.hpp"
 #include "vm/builtin/object.hpp"
+#include "vm/builtin/lazy_executable.hpp"
 #include "vm/builtin/methodtable.hpp"
 #include "builtin/alias.hpp"
 
@@ -39,7 +40,11 @@ namespace rubinius {
           msg.method = alias->original_exec();
           msg.module = alias->original_module();
         } else {
-          msg.method = entry->method();
+          if(LazyExecutable* lazy = try_as<LazyExecutable>(entry->method())) {
+            msg.method = lazy->load(state);
+          } else {
+            msg.method = entry->method();
+          }
           msg.module = module;
         }
         break;
@@ -67,7 +72,11 @@ namespace rubinius {
           msg.method = alias->original_exec();
           msg.module = alias->original_module();
         } else {
-          msg.method = entry->method();
+          if(LazyExecutable* lazy = try_as<LazyExecutable>(entry->method())) {
+            msg.method = lazy->load(state);
+          } else {
+            msg.method = entry->method();
+          }
           msg.module = module;
         }
         break;
@@ -102,6 +111,7 @@ keep_looking:
     if(hierarchy_resolve(state, name, msg, lookup, &was_private)) {
       state->global_cache()->retain(state, lookup.from, name,
           msg.module, msg.method, msg.method_missing, was_private);
+
       return true;
     }
 
