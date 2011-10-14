@@ -2417,7 +2417,7 @@ emitImmediate:
 #if defined(ASMJIT_X64)
       case 8: _emitQWord((uint64_t)(sysuint_t)value); break;
 #endif // ASMJIT_X64
-      default: ASMJIT_ASSERT(0);
+      default: ASMJIT_ASSERT(0 && "immediate size was not valid (0 probably)");
     }
   }
 
@@ -2521,7 +2521,7 @@ sysuint_t AssemblerCore::relocCode(void* _dst, sysuint_t addressBase) const ASMJ
   uint8_t* dst = reinterpret_cast<uint8_t*>(_dst);
 
   sysint_t coff = _buffer.getOffset();
-  // sysint_t csize = getCodeSize();
+  sysint_t csize = getCodeSize();
 
   // We are copying the exact size of the generated code. Extra code for trampolines
   // is generated on-the-fly by relocator (this code doesn't exist at the moment).

@@ -939,6 +939,13 @@ namespace rubinius {
     compiler.compile(state);
 
     if(void* ptr = compiler.jitted_function()) {
+      unsigned char* cp = (unsigned char*)ptr;
+      for(size_t i = 0; i < compiler.jitted_size(); i++) {
+        printf("%02x ", (int)cp[i]);
+      }
+
+      printf("\n");
+
       LLVMState::show_machine_code(ptr, compiler.jitted_size());
     }
 

@@ -11,6 +11,8 @@
 
 namespace rubinius {
 namespace tier1 {
+  using namespace AsmJit;
+    
   Compiler::Compiler(CompiledMethod* cm)
     : cm_(cm)
     , function_(0)
@@ -72,11 +74,15 @@ namespace tier1 {
       return _.getCodeSize();
     }
 
+    AsmJit::Mem p(const GPReg& base, sysint_t disp = 0) {
+      return AsmJit::qword_ptr(base, disp);
+    }
+
     void prologue() {
       _.push(AsmJit::rbp);
-      _.mov(AsmJit::rsp, AsmJit::rbp);
+      _.mov(AsmJit::rbp, AsmJit::rsp);
 
-      _.lea(stack_ptr, ptr(AsmJit::rbp, sizeof(CallFrame)));
+      _.lea(stack_ptr, p(AsmJit::rbp, sizeof(CallFrame)));
 
       stack_used = compiler_.stack_size();
       _.sub(AsmJit::rsp, stack_used);
@@ -103,11 +109,11 @@ namespace tier1 {
     }
 
     AsmJit::Mem stack_top_ptr() {
-      return AsmJit::ptr(stack_ptr);
+      return p(stack_ptr);
     }
 
     AsmJit::Mem stack_back_position(int offset) {
-      return AsmJit::ptr(stack_ptr, -cPointerSize * offset);
+      return p(stack_ptr, -cPointerSize * offset);
     }
 
     void load_stack_top(AsmJit::GPReg& reg) {
@@ -115,8 +121,8 @@ namespace tier1 {
     }
 
     void visit_swap_stack() {
-      AsmJit::Mem top = AsmJit::ptr(stack_ptr);
-      AsmJit::Mem back1 = AsmJit::ptr(stack_ptr, -cPointerSize);
+      AsmJit::Mem top = p(stack_ptr);
+      AsmJit::Mem back1 = p(stack_ptr, -cPointerSize);
 
       _.mov(scratch, top);
       _.mov(scratch2, back1);
@@ -169,12 +175,12 @@ namespace tier1 {
 
     void push_object(Object* obj) {
       _.add(stack_ptr, cPointerSize);
-      _.mov(ptr(stack_ptr), (sysint_t)obj);
+      _.mov(p(stack_ptr), (sysint_t)obj);
     }
 
     void push_reg(AsmJit::GPReg& reg) {
       _.add(stack_ptr, cPointerSize);
-      _.mov(stack_ptr, reg);
+      _.mov(p(stack_ptr), reg);
     }
 
     void visit_push_nil() {
@@ -217,8 +223,8 @@ namespace tier1 {
     }
 
     void visit_ret() {
-      _.mov(return_reg, AsmJit::ptr(stack_ptr));
-      _.jmp(exit_label);
+      _.mov(return_reg, p(stack_ptr));
+      // _.jmp(exit_label);
     }
 
     // void visit_check_frozen() {
