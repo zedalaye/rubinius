@@ -305,4 +305,11 @@ module Rubinius
     ss = Rubinius::StaticScope.of_sender
     return ss.absolute_active_path
   end
+
+  module JITTest
+    def self.tier1_test(cm)
+      Rubinius.primitive :vm_tier1_test
+      raise "blah!"
+    end
+  end
 end

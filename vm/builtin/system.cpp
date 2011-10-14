@@ -73,6 +73,8 @@
 #include "llvm/jit_compiler.hpp"
 #endif
 
+#include "jit/tier1/compiler.hpp"
+
 #ifdef OS_X_10_5
 #include <mach/mach.h>
 #endif
@@ -930,6 +932,17 @@ namespace rubinius {
 #endif
 
     return show;
+  }
+
+  Object* System::vm_tier1_test(STATE, CompiledMethod* cm) {
+    tier1::Compiler compiler(cm);
+    compiler.compile(state);
+
+    if(void* ptr = compiler.jitted_function()) {
+      LLVMState::show_machine_code(ptr, compiler.jitted_size());
+    }
+
+    return Qnil;
   }
 
   Object* System::vm_deoptimize_inliners(STATE, Executable* exec) {

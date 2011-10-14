@@ -3,7 +3,7 @@ Daedalus.blueprint do |i|
 
   gcc.cflags << "-Ivm -Ivm/test/cxxtest -I. "
   gcc.cflags << "-pipe -Wall -fno-omit-frame-pointer"
-  gcc.cflags << "-ggdb3 -Werror"
+  gcc.cflags << "-ggdb3" #  -Werror"
   gcc.cflags << "-DRBX_PROFILER"
   gcc.cflags << "-D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS"
 
@@ -80,6 +80,9 @@ Daedalus.blueprint do |i|
   subdirs = %w[ builtin capi util instruments gc llvm missing ].map do |x|
     "vm/#{x}/*.{cpp,c}"
   end
+
+  subdirs << "vendor/asmjit/AsmJit/*.cpp"
+  subdirs << "vm/jit/tier1/*.cpp"
 
   files = i.source_files "vm/*.{cpp,c}", *subdirs
 
