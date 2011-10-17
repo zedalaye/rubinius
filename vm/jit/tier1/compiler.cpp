@@ -9,6 +9,10 @@
 
 #include "instructions_util.hpp"
 
+#include "jit/tier1/offsets.hpp"
+
+extern "C" void* rbx_arg_error();
+
 namespace rubinius {
 namespace tier1 {
   using namespace AsmJit;
@@ -19,12 +23,19 @@ namespace tier1 {
     , size_(0)
   {}
 
-  int Compiler::stack_size() {
+  size_t Compiler::callframe_size() {
     VMMethod* vmm = cm_->backend_method();
-    size_t frame = sizeof(CallFrame) + (vmm->stack_size * sizeof(Object*));
-    size_t vars =  sizeof(StackVariables) + (vmm->number_of_locals * sizeof(Object*));
+    return sizeof(CallFrame) + (vmm->stack_size * sizeof(Object*));
+  }
 
-    return frame + vars;
+  size_t Compiler::variables_size() {
+    VMMethod* vmm = cm_->backend_method();
+    return sizeof(StackVariables) + (vmm->number_of_locals * sizeof(Object*));
+  }
+
+  int Compiler::required_args() {
+    VMMethod* vmm = cm_->backend_method();
+    return vmm->required_args;
   }
 
   class VisitorX8664 : public VisitInstructions<VisitorX8664> {
@@ -38,6 +49,7 @@ namespace tier1 {
     const AsmJit::GPReg& arg2;
     const AsmJit::GPReg& arg3;
     const AsmJit::GPReg& arg4;
+    AsmJit::Mem arg5;
     const AsmJit::GPReg& return_reg;
 
     AsmJit::GPReg& scratch;
@@ -46,6 +58,9 @@ namespace tier1 {
     AsmJit::FileLogger logger_;
 
     const static int cPointerSize = sizeof(Object*);
+
+    int callframe_offset;
+    int variables_offset;
 
   public:
 
@@ -58,9 +73,10 @@ namespace tier1 {
       , arg2(AsmJit::rdx)
       , arg3(AsmJit::r8)
       , arg4(AsmJit::r9)
+      , arg5(rbp, 16)
       , return_reg(AsmJit::rax)
       , scratch(const_cast<AsmJit::GPReg&>(AsmJit::rax))
-      , scratch2(const_cast<AsmJit::GPReg&>(AsmJit::rbx))
+      , scratch2(const_cast<AsmJit::GPReg&>(AsmJit::rsi))
       , logger_(stderr)
     {
       _.setLogger(&logger_);
@@ -78,14 +94,84 @@ namespace tier1 {
       return AsmJit::qword_ptr(base, disp);
     }
 
+    AsmJit::Mem fr(sysint_t disp) {
+      return AsmJit::qword_ptr(rbp, disp);
+    }
+
+    static const int cVMOffset = -0x8;
+    static const int cPreviousOffset = -0x10;
+    static const int cExecOffset = -0x18;
+    static const int cModOffset = -0x20;
+    static const int cArgOffset = -0x28;
+
+    void check_arity2() {
+      int req = compiler_.required_args();
+      _.mov(scratch, fr(cArgOffset));
+      _.mov(scratch, p(scratch, offsets::Arguments::total));
+      _.cmp(scratch, req);
+
+      Label rest = _.newLabel();
+
+      _.je(rest);
+
+      _.mov(arg1, fr(cVMOffset));
+      _.mov(arg2, fr(cPreviousOffset));
+      _.mov(arg3, fr(cArgOffset));
+      _.mov(arg4, scratch);
+      _.call((void*)rbx_arg_error);
+
+      _.mov(return_reg, 0);
+      _.jmp(exit_label);
+     
+      _.bind(rest);
+    }
+
+    void check_arity() {
+      int req = compiler_.required_args();
+      _.mov(scratch2, arg5);
+      _.mov(scratch, p(scratch2, offsets::Arguments::total));
+      _.cmp(scratch, req);
+
+      Label rest = _.newLabel();
+
+      _.je(rest);
+
+      _.mov(arg3, scratch2);
+      _.mov(arg4, scratch);
+      _.call((void*)rbx_arg_error);
+
+      _.mov(return_reg, 0);
+      _.jmp(exit_label);
+     
+      _.bind(rest);
+    }
+
     void prologue() {
       _.push(AsmJit::rbp);
       _.mov(AsmJit::rbp, AsmJit::rsp);
 
-      _.lea(stack_ptr, p(AsmJit::rbp, sizeof(CallFrame)));
+      stack_used = compiler_.callframe_size() + compiler_.variables_size();
+      stack_used += (cPointerSize * 5);
 
-      stack_used = compiler_.stack_size();
       _.sub(AsmJit::rsp, stack_used);
+
+      check_arity();
+
+      _.mov(fr(cVMOffset), arg1);
+      _.mov(fr(cPreviousOffset), arg2);
+      _.mov(fr(cExecOffset), arg3);
+      _.mov(fr(cModOffset), arg4);
+
+      _.mov(scratch, arg5);
+      _.mov(fr(cArgOffset), scratch);
+
+      callframe_offset = cArgOffset - compiler_.callframe_size();
+      variables_offset = callframe_offset - compiler_.variables_size();
+
+      int stack_top = callframe_offset + sizeof(CallFrame);
+
+      // Substract a pointer because the stack starts beyond the top.
+      _.lea(stack_ptr, p(AsmJit::rbp, stack_top - sizeof(Object*)));
     }
 
     void epilogue() {
@@ -224,7 +310,7 @@ namespace tier1 {
 
     void visit_ret() {
       _.mov(return_reg, p(stack_ptr));
-      // _.jmp(exit_label);
+      _.jmp(exit_label);
     }
 
     // void visit_check_frozen() {

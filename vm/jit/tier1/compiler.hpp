@@ -24,7 +24,9 @@ namespace tier1 {
     Compiler(CompiledMethod* cm);
 
     bool compile(VM*);
-    int stack_size();
+    size_t callframe_size();
+    size_t variables_size();
+    int required_args();
   };
 }
 }
