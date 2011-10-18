@@ -29,6 +29,8 @@
 
 #include "vm/object_utils.hpp"
 
+#include "jit/tier1/compiler.hpp"
+
 namespace rubinius {
 
   Class* Object::class_object(STATE) const {
@@ -502,6 +504,52 @@ namespace rubinius {
 
     return dis.send(state, call_frame, lookup, args);
   }
+
+  Object* Object::send_tier1(STATE, CallFrame* call_frame, Executable* exec, Module* mod,
+                             Arguments& args) {
+    if(args.total() < 1) return Primitives::failure();
+
+    // Don't shift the argument because we might fail and we need Arguments
+    // to be pristine in the fallback code.
+    Object* meth = args.get_argument(0);
+    Symbol* sym = try_as<Symbol>(meth);
+
+    if(!sym) {
+      if(String* str = try_as<String>(meth)) {
+        sym = str->to_sym(state);
+      } else {
+        return Primitives::failure();
+      }
+    }
+
+    // Discard the 1st argument.
+    args.shift(state);
+    args.set_name(sym);
+
+    Dispatch dis(sym);
+    LookupData lookup(this, this->lookup_begin(state), true);
+
+    if(!dis.resolve(state, lookup)) return Primitives::failure();
+
+    CompiledMethod* cm = try_as<CompiledMethod>(dis.method);
+    if(!cm) return Primitives::failure();
+
+    tier1::Compiler compiler(cm);
+    compiler.compile(state);
+
+    if(void* ptr = compiler.jitted_function()) {
+      // LLVMState::show_machine_code(ptr, compiler.jitted_size());
+
+      executor eptr = (executor)ptr;
+
+      Object* obj = (eptr)(state, call_frame, cm, dis.module, args);
+      // free(ptr);
+      return obj;
+    }
+
+    return Primitives::failure();
+  }
+
 
   void Object::set_field(STATE, size_t index, Object* val) {
     type_info(state)->set_field(state, this, index, val);

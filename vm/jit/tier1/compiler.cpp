@@ -12,6 +12,10 @@
 #include "jit/tier1/offsets.hpp"
 
 extern "C" void* rbx_arg_error();
+extern "C" void* rbx_prologue_check2();
+extern "C" void* rbx_flush_scope();
+extern "C" void* rbx_check_frozen();
+extern "C" void* rbx_meta_to_s();
 
 namespace rubinius {
 namespace tier1 {
@@ -28,6 +32,11 @@ namespace tier1 {
     return sizeof(CallFrame) + (vmm->stack_size * sizeof(Object*));
   }
 
+  size_t Compiler::stack_size() {
+    VMMethod* vmm = cm_->backend_method();
+    return vmm->stack_size;
+  }
+
   size_t Compiler::variables_size() {
     VMMethod* vmm = cm_->backend_method();
     return sizeof(StackVariables) + (vmm->number_of_locals * sizeof(Object*));
@@ -38,7 +47,13 @@ namespace tier1 {
     return vmm->required_args;
   }
 
+  int Compiler::locals() {
+    VMMethod* vmm = cm_->backend_method();
+    return vmm->number_of_locals;
+  }
+
   class VisitorX8664 : public VisitInstructions<VisitorX8664> {
+    VM* state;
     Compiler& compiler_;
     AsmJit::Assembler _;
     AsmJit::Label exit_label;
@@ -49,10 +64,11 @@ namespace tier1 {
     const AsmJit::GPReg& arg2;
     const AsmJit::GPReg& arg3;
     const AsmJit::GPReg& arg4;
-    AsmJit::Mem arg5;
+    const AsmJit::GPReg& arg5;
     const AsmJit::GPReg& return_reg;
 
     AsmJit::GPReg& scratch;
+    AsmJit::GPReg& scratch32;
     AsmJit::GPReg& scratch2;
 
     AsmJit::FileLogger logger_;
@@ -64,19 +80,21 @@ namespace tier1 {
 
   public:
 
-    VisitorX8664(Compiler& compiler)
-      : compiler_(compiler)
+    VisitorX8664(STATE, Compiler& compiler)
+      : state(state)
+      , compiler_(compiler)
       , exit_label(_.newLabel())
       , stack_used(0)
       , stack_ptr(AsmJit::rbx)
-      , arg1(AsmJit::rcx)
-      , arg2(AsmJit::rdx)
-      , arg3(AsmJit::r8)
-      , arg4(AsmJit::r9)
-      , arg5(rbp, 16)
+      , arg1(AsmJit::rdi)
+      , arg2(AsmJit::rsi)
+      , arg3(AsmJit::rdx)
+      , arg4(AsmJit::rcx)
+      , arg5(AsmJit::r8)
       , return_reg(AsmJit::rax)
-      , scratch(const_cast<AsmJit::GPReg&>(AsmJit::rax))
-      , scratch2(const_cast<AsmJit::GPReg&>(AsmJit::rsi))
+      , scratch(const_cast<AsmJit::GPReg&>(AsmJit::r12))
+      , scratch32(const_cast<AsmJit::GPReg&>(AsmJit::eax))
+      , scratch2(const_cast<AsmJit::GPReg&>(AsmJit::r13))
       , logger_(stderr)
     {
       _.setLogger(&logger_);
@@ -94,6 +112,10 @@ namespace tier1 {
       return AsmJit::qword_ptr(base, disp);
     }
 
+    AsmJit::Mem p32(const GPReg& base, sysint_t disp = 0) {
+      return AsmJit::dword_ptr(base, disp);
+    }
+
     AsmJit::Mem fr(sysint_t disp) {
       return AsmJit::qword_ptr(rbp, disp);
     }
@@ -104,19 +126,28 @@ namespace tier1 {
     static const int cModOffset = -0x20;
     static const int cArgOffset = -0x28;
 
-    void check_arity2() {
+    AsmJit::Mem callframe(sysint_t disp, bool word=false) {
+      if(word) {
+        return AsmJit::dword_ptr(rbp, callframe_offset + disp);
+      } else {
+        return AsmJit::qword_ptr(rbp, callframe_offset + disp);
+      }
+    }
+
+    AsmJit::Mem variables(sysint_t disp) {
+      return AsmJit::qword_ptr(rbp, variables_offset + disp);
+    }
+
+    void check_arity() {
       int req = compiler_.required_args();
-      _.mov(scratch, fr(cArgOffset));
-      _.mov(scratch, p(scratch, offsets::Arguments::total));
+      _.movsxd(scratch, p32(arg5, offsets::Arguments::total));
       _.cmp(scratch, req);
 
       Label rest = _.newLabel();
 
       _.je(rest);
 
-      _.mov(arg1, fr(cVMOffset));
-      _.mov(arg2, fr(cPreviousOffset));
-      _.mov(arg3, fr(cArgOffset));
+      _.mov(arg3, arg5);
       _.mov(arg4, scratch);
       _.call((void*)rbx_arg_error);
 
@@ -126,24 +157,97 @@ namespace tier1 {
       _.bind(rest);
     }
 
-    void check_arity() {
+    void initialize_frame() {
+      _.comment("CallFrame::previous");
+      _.mov(scratch, fr(cPreviousOffset));
+      _.mov(callframe(offsets::CallFrame::previous), scratch);
+
+      _.comment("CallFrame::arguments");
+      _.mov(scratch, fr(cArgOffset));
+      _.mov(callframe(offsets::CallFrame::arguments), scratch);
+
+      _.comment("CallFrame::dispatch_data");
+      _.mov(callframe(offsets::CallFrame::dispatch_data), 0);
+
+      _.comment("CallFrame::cm");
+      _.mov(scratch, fr(cExecOffset));
+      _.mov(callframe(offsets::CallFrame::cm), scratch);
+
+      _.comment("CallFrame::flags");
+      _.mov(callframe(offsets::CallFrame::flags, true), 0);
+
+      _.comment("CallFrame::ip");
+      _.mov(callframe(offsets::CallFrame::ip, true), 0);
+
+      _.comment("CallFrame::scope");
+      _.lea(scratch, fr(variables_offset));
+      _.mov(callframe(offsets::CallFrame::scope), scratch);
+
+      _.comment("CallFrame::jit_data");
+      _.mov(callframe(offsets::CallFrame::jit_data), 0);
+    }
+
+    void setup_scope() {
+      _.mov(scratch2, fr(cArgOffset));
+
+      _.comment("StackVariables::on_heap");
+      _.mov(variables(offsets::StackVariables::on_heap), 0);
+
+      _.comment("StackVariables::parent");
+      _.mov(variables(offsets::StackVariables::parent), 0);
+
+      _.comment("StackVariables::self");
+      _.mov(scratch, p(scratch2, offsets::Arguments::recv));
+      _.mov(variables(offsets::StackVariables::self), scratch);
+
+      _.comment("StackVariables::block");
+      _.mov(scratch, p(scratch2, offsets::Arguments::block));
+      _.mov(variables(offsets::StackVariables::block), scratch);
+
+      _.comment("StackVariables::module");
+      _.mov(scratch, fr(cModOffset));
+      _.mov(variables(offsets::StackVariables::module), scratch);
+
+      _.comment("StackVariables::last_match");
+      _.mov(variables(offsets::StackVariables::last_match), (sysint_t)Qnil);
+
+      _.comment("StackVariables::locals");
+
+      int size = compiler_.locals();
+      for(int i = 0; i < size; i++) {
+        _.mov(
+              variables(offsets::StackVariables::locals + (i * cPointerSize)),
+              (sysint_t)Qnil);
+      }
+    }
+
+    void nil_stack() {
+      int count = compiler_.stack_size();
+
+      for(int i = 0; i < count; i++) {
+        _.comment("CallFrame::stack => nil");
+        _.mov(p(stack_ptr, count * cPointerSize), (sysint_t)Qnil);
+      }
+    }
+
+    void import_args() {
       int req = compiler_.required_args();
-      _.mov(scratch2, arg5);
-      _.mov(scratch, p(scratch2, offsets::Arguments::total));
-      _.cmp(scratch, req);
+      _.mov(scratch2, fr(cArgOffset));
 
-      Label rest = _.newLabel();
+      for(int i = 0; i < req; i++) {
+        _.comment("argument => variables");
+        _.mov(scratch, p(scratch2, offsets::Arguments::arguments + (i * cPointerSize)));
+        _.mov(variables(offsets::StackVariables::locals + (i * cPointerSize)), scratch);
+      }
+    }
 
-      _.je(rest);
+    void check_interrupts() {
+      _.mov(arg1, fr(cVMOffset));
+      _.lea(arg2, fr(callframe_offset));
 
-      _.mov(arg3, scratch2);
-      _.mov(arg4, scratch);
-      _.call((void*)rbx_arg_error);
-
-      _.mov(return_reg, 0);
-      _.jmp(exit_label);
-     
-      _.bind(rest);
+      _.call((void*)rbx_prologue_check2);
+      _.cmp(rax, 0);
+      _.je(exit_label);
     }
 
     void prologue() {
@@ -162,16 +266,22 @@ namespace tier1 {
       _.mov(fr(cExecOffset), arg3);
       _.mov(fr(cModOffset), arg4);
 
-      _.mov(scratch, arg5);
-      _.mov(fr(cArgOffset), scratch);
+      _.mov(fr(cArgOffset), arg5);
 
       callframe_offset = cArgOffset - compiler_.callframe_size();
       variables_offset = callframe_offset - compiler_.variables_size();
 
       int stack_top = callframe_offset + sizeof(CallFrame);
 
+      initialize_frame();
+
       // Substract a pointer because the stack starts beyond the top.
       _.lea(stack_ptr, p(AsmJit::rbp, stack_top - sizeof(Object*)));
+
+      nil_stack();
+      setup_scope();
+      import_args();
+      check_interrupts();
     }
 
     void epilogue() {
@@ -282,10 +392,9 @@ namespace tier1 {
     }
 
     void visit_push_undef() {
-      // Object** addr = state->shared().globals.undefined.object_address();
-      // _.mov_ptr(scratch, addr);
-      // _.add(stack_ptr, cPointerSize);
-      // _.mov(stack_ptr, scratch);
+      Object** addr = state->shared.globals.undefined.object_address();
+      _.mov_ptr(scratch, addr);
+      push_reg(scratch);
     }
 
     void visit_push_int(opcode arg) {
@@ -309,20 +418,52 @@ namespace tier1 {
     }
 
     void visit_ret() {
+      _.mov(arg1, fr(cVMOffset));
+      _.lea(arg2, fr(variables_offset));
+      _.call((void*)rbx_flush_scope);
+
       _.mov(return_reg, p(stack_ptr));
       _.jmp(exit_label);
     }
 
-    // void visit_check_frozen() {
-      // load_vm(scratch);
-      // _.mov(arg1, scratch);
+    void visit_set_local(opcode index) {
+      load_stack_top(scratch);
 
-      // load_callframe(scratch);
-      // _.mov(arg2, scratch);
+      _.mov(variables(offsets::StackVariables::locals + (index * cPointerSize)),
+            scratch);
+    }
 
-      // _.mov(arg3, stack_top_ptr());
-      // _.call((void*)rbx_check_frozen);
-    // }
+    void load_vm(const GPReg& reg) {
+      _.mov(reg, fr(cVMOffset));
+    }
+
+    void load_callframe(const GPReg& reg) {
+      _.lea(reg, fr(callframe_offset));
+    }
+
+    void visit_check_frozen() {
+      load_vm(scratch);
+      _.mov(arg1, scratch);
+
+      load_callframe(scratch);
+      _.mov(arg2, scratch);
+
+      _.mov(arg3, stack_top_ptr());
+      _.call((void*)rbx_check_frozen);
+    }
+
+    void visit_meta_to_s(opcode name) {
+      InlineCache* cache = reinterpret_cast<InlineCache*>(name);
+
+      load_vm(arg1);
+      load_callframe(arg2);
+      _.mov(arg3, (sysint_t)cache);
+      _.mov(arg4, p(stack_ptr));
+      _.call((void*)rbx_meta_to_s);
+      _.cmp(rax, 0);
+      _.je(exit_label);
+      _.mov(p(stack_ptr), rax);
+    }
 
   };
 
@@ -332,7 +473,7 @@ namespace tier1 {
 
     VMMethod* vmm = cm_->internalize(state, &reason, &ip);
 
-    VisitorX8664 visit(*this);
+    VisitorX8664 visit(state, *this);
 
     visit.prologue();
 

@@ -188,6 +188,8 @@ namespace rubinius {
     // Rubinius.primitive? :object_send
     Object* send_prim(STATE, CallFrame* call_frame, Executable* exec, Module* mod, Arguments& args);
 
+    // Rubinius.primitive? :object_send_tier1
+    Object* send_tier1(STATE, CallFrame* call_frame, Executable* exec, Module* mod, Arguments& args);
 
   public:   /* Ruby interface */
 

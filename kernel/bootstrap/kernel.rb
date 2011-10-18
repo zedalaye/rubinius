@@ -78,4 +78,8 @@ module Kernel
   end
   private :yield_gdb
 
+  def __send_tier1__(message, *args)
+    Rubinius.primitive :object_send_tier1
+    raise TypeError, "Unable to send '#{message}' and JIT it"
+  end
 end

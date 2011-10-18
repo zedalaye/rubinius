@@ -17,6 +17,10 @@ namespace rubinius {
     return send(state, call_frame, lookup, args, reason);
   }
 
+  bool Dispatch::resolve(STATE, LookupData& lookup) {
+    return GlobalCache::resolve(state, name, *this, lookup);
+  }
+
   Object* Dispatch::send(STATE, CallFrame* call_frame, LookupData& lookup,
                          Arguments& args, MethodMissingReason reason)
   {

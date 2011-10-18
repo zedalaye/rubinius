@@ -934,7 +934,7 @@ namespace rubinius {
     return show;
   }
 
-  Object* System::vm_tier1_test(STATE, CompiledMethod* cm) {
+  Object* System::vm_tier1_test(STATE, CompiledMethod* cm, CallFrame* calling_environment) {
     tier1::Compiler compiler(cm);
     compiler.compile(state);
 

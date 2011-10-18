@@ -590,6 +590,10 @@ struct ASMJIT_API AssemblerCore
   //! error value remains the same.
   virtual void* make() ASMJIT_NOTHROW;
 
+  void comment(const char* com) {
+    _comment = com;
+  }
+
   // --------------------------------------------------------------------------
   // [Links]
   // --------------------------------------------------------------------------

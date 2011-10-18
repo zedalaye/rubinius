@@ -922,6 +922,10 @@ extern "C" {
     return Qtrue;
   }
 
+  Object* rbx_prologue_check2(STATE, CallFrame* call_frame) {
+    return rbx_prologue_check(state, call_frame);
+  }
+
   Object* rbx_check_interrupts(STATE, CallFrame* call_frame) {
     if(unlikely(state->interrupts.check)) {
       state->interrupts.checked();

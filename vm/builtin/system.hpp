@@ -230,7 +230,7 @@ namespace rubinius {
     static Object* vm_jit_block(STATE, BlockEnvironment* env, Object* show);
 
     // Rubinius.primitive :vm_tier1_test
-    static Object* vm_tier1_test(STATE, CompiledMethod* cm);
+    static Object* vm_tier1_test(STATE, CompiledMethod* cm, CallFrame* calling_environment);
 
     // Deoptimze any method that inlined exec
     // Rubinius.primitive :vm_deoptimize_inliners
