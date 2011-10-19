@@ -7,6 +7,7 @@ namespace rubinius {
 
 namespace tier1 {
   class Compiler {
+    bool debug_;
     CompiledMethod* cm_;
     void* function_;
     size_t size_;
@@ -18,6 +19,15 @@ namespace tier1 {
 
     size_t jitted_size() {
       return size_;
+    }
+
+  public:
+    void set_debug(bool val=true) {
+      debug_ = val;
+    }
+
+    bool debug_p() {
+      return debug_;
     }
 
   public:

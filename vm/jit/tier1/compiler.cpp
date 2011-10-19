@@ -22,7 +22,8 @@ namespace tier1 {
   using namespace AsmJit;
     
   Compiler::Compiler(CompiledMethod* cm)
-    : cm_(cm)
+    : debug_(false)
+    , cm_(cm)
     , function_(0)
     , size_(0)
   {}
@@ -97,7 +98,9 @@ namespace tier1 {
       , scratch2(const_cast<AsmJit::GPReg&>(AsmJit::r13))
       , logger_(stderr)
     {
-      _.setLogger(&logger_);
+      if(compiler.debug_p()) {
+        _.setLogger(&logger_);
+      }
     }
 
     void* make() {
@@ -120,11 +123,12 @@ namespace tier1 {
       return AsmJit::qword_ptr(rbp, disp);
     }
 
-    static const int cVMOffset = -0x8;
-    static const int cPreviousOffset = -0x10;
-    static const int cExecOffset = -0x18;
-    static const int cModOffset = -0x20;
-    static const int cArgOffset = -0x28;
+    static const int cCalleeSaved = 3 * cPointerSize;
+    static const int cVMOffset = -0x8 - cCalleeSaved;
+    static const int cPreviousOffset = cVMOffset - 0x8;
+    static const int cExecOffset = cPreviousOffset - 0x8;
+    static const int cModOffset = cExecOffset - 0x8;
+    static const int cArgOffset = cModOffset - 0x8;
 
     AsmJit::Mem callframe(sysint_t disp, bool word=false) {
       if(word) {
@@ -254,6 +258,10 @@ namespace tier1 {
       _.push(AsmJit::rbp);
       _.mov(AsmJit::rbp, AsmJit::rsp);
 
+      _.push(AsmJit::rbx);
+      _.push(AsmJit::r12);
+      _.push(AsmJit::r13);
+
       stack_used = compiler_.callframe_size() + compiler_.variables_size();
       stack_used += (cPointerSize * 5);
 
@@ -288,6 +296,9 @@ namespace tier1 {
       _.bind(exit_label);
 
       _.add(AsmJit::rsp, stack_used);
+      _.pop(AsmJit::r13);
+      _.pop(AsmJit::r12);
+      _.pop(AsmJit::rbx);
       _.pop(AsmJit::rbp);
       _.ret();
     }
