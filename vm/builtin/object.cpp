@@ -522,10 +522,6 @@ namespace rubinius {
       }
     }
 
-    // Discard the 1st argument.
-    args.shift(state);
-    args.set_name(sym);
-
     Dispatch dis(sym);
     LookupData lookup(this, this->lookup_begin(state), true);
 
@@ -535,10 +531,15 @@ namespace rubinius {
     if(!cm) return Primitives::failure();
 
     tier1::Compiler compiler(cm);
+    if(getenv("RBX_TIER1_DEBUG")) compiler.set_debug();
     compiler.compile(state);
 
     if(void* ptr = compiler.jitted_function()) {
       // LLVMState::show_machine_code(ptr, compiler.jitted_size());
+
+      // Discard the 1st argument.
+      args.shift(state);
+      args.set_name(sym);
 
       executor eptr = (executor)ptr;
 

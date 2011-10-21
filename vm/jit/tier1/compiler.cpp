@@ -20,6 +20,8 @@ extern "C" void* rbx_meta_to_s();
 namespace rubinius {
 namespace tier1 {
   using namespace AsmJit;
+
+  class Unsupported {};
     
   Compiler::Compiler(CompiledMethod* cm)
     : debug_(false)
@@ -236,11 +238,12 @@ namespace tier1 {
 
     void import_args() {
       int req = compiler_.required_args();
-      _.mov(scratch2, fr(cArgOffset));
+      _.mov(rax, fr(cArgOffset));
+      _.mov(scratch2, p(rax, offsets::Arguments::arguments));
 
       for(int i = 0; i < req; i++) {
         _.comment("argument => variables");
-        _.mov(scratch, p(scratch2, offsets::Arguments::arguments + (i * cPointerSize)));
+        _.mov(scratch, p(scratch2, i * cPointerSize));
         _.mov(variables(offsets::StackVariables::locals + (i * cPointerSize)), scratch);
       }
     }
@@ -304,7 +307,7 @@ namespace tier1 {
     }
 
     void visit(opcode op, opcode arg1, opcode arg2) {
-      rubinius::bug("Missing opcode implementation");
+      throw Unsupported();
     }
 
     void visit_pop() {
@@ -444,6 +447,12 @@ namespace tier1 {
             scratch);
     }
 
+    void visit_push_local(opcode index) {
+      _.comment("push_local");
+      _.mov(scratch, variables(offsets::StackVariables::locals + (index * cPointerSize)));
+      push_reg(scratch);
+    }
+
     void load_vm(const GPReg& reg) {
       _.mov(reg, fr(cVMOffset));
     }
@@ -488,7 +497,11 @@ namespace tier1 {
 
     visit.prologue();
 
-    visit.drive(vmm);
+    try {
+      visit.drive(vmm);
+    } catch(Unsupported& us) {
+      return false;
+    }
 
     visit.epilogue();
 
