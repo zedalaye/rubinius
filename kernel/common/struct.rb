@@ -101,7 +101,8 @@ class Struct
 
   def instance_variables
     # Hide the ivars used to store the struct fields
-    super() - _attrs.map { |a| "@#{a}" }
+    attr_syms = _attrs.map { |a| "@#{a}".to_sym }
+    super() - Rubinius.convert_to_names(attr_syms)
   end
 
   def initialize(*args)
@@ -148,7 +149,7 @@ class Struct
   ##
   # call-seq:
   #   struct[symbol]    => anObject
-  #   struct[fixnum]    => anObject 
+  #   struct[fixnum]    => anObject
   #
   # Attribute Reference---Returns the value of the instance variable named
   # by <em>symbol</em>, or indexed (0..length-1) by <em>fixnum</em>. Will
@@ -320,7 +321,7 @@ class Struct
   ##
   # call-seq:
   #   struct.select(fixnum, ... )   => array
-  #   struct.select {|i| block }    => array
+  #   struct.select { |i| block }    => array
   #
   # The first form returns an array containing the elements in
   # <em>struct</em> corresponding to the given indices. The second form
@@ -333,7 +334,7 @@ class Struct
   #    l.select(1, 3, 5)               #=> [22, 44, 66]
   #    l.select(0, 2, 4)               #=> [11, 33, 55]
   #    l.select(-1, -3, -5)            #=> [66, 44, 22]
-  #    l.select {|v| (v % 2).zero? }   #=> [22, 44, 66]
+  #    l.select { |v| (v % 2).zero? }  #=> [22, 44, 66]
 
   def select(&block)
     to_a.select(&block)

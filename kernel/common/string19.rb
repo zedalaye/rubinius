@@ -16,7 +16,7 @@ class String
     # TODO
     self
   end
-  
+
   def hex
     return 0 if self.chars.first == "_"
     to_inum(16, false)
@@ -51,13 +51,15 @@ class String
         current += 1
       end
     else
-      after_stop = exclusive ? stop : stop.succ
-      current = self
+      unless stop.size < size
+        after_stop = exclusive ? stop : stop.succ
+        current = self
 
-      until current == after_stop
-        yield current
-        current = StringValue(current.succ)
-        break if current.size > stop.size || current.size == 0
+        until current == after_stop
+          yield current
+          current = StringValue(current.succ)
+          break if current.size > stop.size || current.size == 0
+        end
       end
     end
     self
@@ -88,6 +90,35 @@ class String
     self
   end
 
+  # Squeezes <i>self</i> in place, returning either <i>self</i>, or
+  # <code>nil</code> if no changes were made.
+  def squeeze!(*strings)
+    if strings.first =~ /.+\-.+/
+      range = strings.first.gsub(/-/, '').split('')
+      raise ArgumentError, "invalid range #{strings} in string transliteration" unless range == range.sort
+    end
+
+    return if @num_bytes == 0
+    self.modify!
+
+    table = count_table(*strings).__data__
+
+    i, j, last = 1, 0, @data[0]
+    while i < @num_bytes
+      c = @data[i]
+      unless c == last and table[c] == 1
+        @data[j+=1] = last = c
+      end
+      i += 1
+    end
+
+    if (j += 1) < @num_bytes
+      @num_bytes = j
+      self
+    else
+      nil
+    end
+  end
 
   # Performs the substitutions of <code>String#sub</code> in place,
   # returning <i>self</i>, or <code>nil</code> if no substitutions were
@@ -135,7 +166,7 @@ class String
 
     return self
   end
-  
+
   # Deletes the specified portion from <i>self</i>, and returns the portion
   # deleted. The forms that take a <code>Fixnum</code> will raise an
   # <code>IndexError</code> if the value is out of range; the <code>Range</code>
@@ -242,14 +273,14 @@ class String
 
   alias_method :next, :succ
   alias_method :next!, :succ!
-  
+
   def to_r
     return Rational(0,1) if empty?
-    
+
     clean       = strip
     numerator   = clean.gsub(".", "").to_i
     denominator = 1
-    
+
     if clean.match(/\d\.\d/)
       denominator = 10**clean.split(".")[1].to_i.to_s.length
     end
@@ -257,7 +288,7 @@ class String
     if clean.match(/\d\/\d/)
       denominator *= clean.split("/")[1].to_i
     end
-    
+
     return Rational(numerator, denominator)
   end
 
@@ -546,4 +577,175 @@ class String
 
     return self
   end
+
+  # Replaces the contents and taintedness of <i>string</i> with the corresponding
+  # values in <i>other</i>.
+  #
+  #   s = "hello"         #=> "hello"
+  #   s.replace "world"   #=> "world"
+  def replace(other)
+    Rubinius.check_frozen
+
+    # If we're replacing with ourselves, then we have nothing to do
+    return self if equal?(other)
+
+    other = StringValue(other)
+
+    @shared = true
+    other.shared!
+    @data = other.__data__
+    @num_bytes = other.num_bytes
+    @hash_value = nil
+
+    taint if other.tainted?
+
+    self
+  end
+  alias_method :initialize_copy, :replace
+  # private :initialize_copy
+
+  # Returns a new string with the characters from <i>self</i> in reverse order.
+  #
+  #   "stressed".reverse   #=> "desserts"
+
+  # Append --- Concatenates the given object to <i>self</i>. If the object is a
+  # <code>Fixnum</code> between 0 and 255, it is converted to a character before
+  # concatenation.
+  #
+  #   a = "hello "
+  #   a << "world"   #=> "hello world"
+  #   a.concat(33)   #=> "hello world!"
+  def <<(other)
+    modify!
+
+    unless other.kind_of? String
+      if other.kind_of?(Integer) && other >= 0 && other <= 255
+        other = other.chr
+      elsif other.kind_of?(Integer) && other < 0
+        raise RangeError, "negative argument"
+      else
+        other = StringValue(other)
+      end
+    end
+
+    taint if other.tainted?
+    append(other)
+  end
+  alias_method :concat, :<<
+
+  # Returns a one-character string at the beginning of the string.
+  #
+  #   a = "abcde"
+  #   a.chr    #=> "a"
+  def chr
+    if empty?
+      self
+    else
+      self[0]
+    end
+  end
+
+  # Splits <i>self</i> using the supplied parameter as the record separator
+  # (<code>$/</code> by default), passing each substring in turn to the supplied
+  # block. If a zero-length record separator is supplied, the string is split on
+  # <code>\n</code> characters, except that multiple successive newlines are
+  # appended together.
+  #
+  #   print "Example one\n"
+  #   "hello\nworld".each { |s| p s }
+  #   print "Example two\n"
+  #   "hello\nworld".each('l') { |s| p s }
+  #   print "Example three\n"
+  #   "hello\n\n\nworld".each('') { |s| p s }
+  #
+  # <em>produces:</em>
+  #
+  #   Example one
+  #   "hello\n"
+  #   "world"
+  #   Example two
+  #   "hel"
+  #   "l"
+  #   "o\nworl"
+  #   "d"
+  #   Example three
+  #   "hello\n\n\n"
+  #   "world"
+  def each_line(sep=$/)
+    return to_enum(:each_line, sep) unless block_given?
+
+    # weird edge case.
+    if sep.nil?
+      yield self
+      return self
+    end
+
+    sep = StringValue(sep)
+
+    pos = 0
+
+    size = @num_bytes
+    orig_data = @data
+
+    # If the separator is empty, we're actually in paragraph mode. This
+    # is used so infrequently, we'll handle it completely separately from
+    # normal line breaking.
+    if sep.empty?
+      sep = "\n\n"
+      pat_size = 2
+
+      while pos < size
+        nxt = find_string(sep, pos)
+        break unless nxt
+
+        while @data[nxt] == 10 and nxt < @num_bytes
+          nxt += 1
+        end
+
+        match_size = nxt - pos
+
+        # string ends with \n's
+        break if pos == @num_bytes
+
+        str = substring(pos, match_size)
+        yield str unless str.empty?
+
+        # detect mutation within the block
+        if !@data.equal?(orig_data) or @num_bytes != size
+          raise RuntimeError, "string modified while iterating"
+        end
+
+        pos = nxt
+      end
+
+      # No more separates, but we need to grab the last part still.
+      fin = substring(pos, @num_bytes - pos)
+      yield fin if fin and !fin.empty?
+
+    else
+
+      # This is the normal case.
+      pat_size = sep.size
+      unmodified_self = clone
+
+      while pos < size
+        nxt = unmodified_self.find_string(sep, pos)
+        break unless nxt
+
+        match_size = nxt - pos
+        str = unmodified_self.substring(pos, match_size + pat_size)
+        yield str unless str.empty?
+
+        pos = nxt + pat_size
+      end
+
+      # No more separates, but we need to grab the last part still.
+      fin = unmodified_self.substring(pos, @num_bytes - pos)
+      yield fin unless fin.empty?
+    end
+
+    self
+  end
+
+  alias_method :lines, :each_line
 end

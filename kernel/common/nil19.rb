@@ -1,9 +1,9 @@
 class NilClass
   def to_r
-    Rational(0,1)
+    Rational(0, 1)
   end
-  
-  def rationalize(*args)
+
+  def rationalize(eps = nil)
     to_r
   end
 end

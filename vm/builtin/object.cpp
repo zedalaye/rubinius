@@ -30,6 +30,7 @@
 #include "vm/object_utils.hpp"
 
 #include "jit/tier1/compiler.hpp"
+#include "configuration.hpp"
 
 namespace rubinius {
 
@@ -133,6 +134,10 @@ namespace rubinius {
         ivars(state, clt->duplicate(state));
 
       };
+    }
+
+    if(!LANGUAGE_18_ENABLED(state) && other->untrusted_p(state) == Qtrue) {
+      untrust(state);
     }
 
     return this;
@@ -732,6 +737,7 @@ namespace rubinius {
   }
 
   Object* Object::show(STATE, int level) {
+    if(reference_p() && !state->om->valid_object_p(this)) rubinius::warn("bad object in show");
     type_info(state)->show(state, this, level);
     return Qnil;
   }
@@ -836,4 +842,10 @@ namespace rubinius {
     wb->write_barrier(this, reinterpret_cast<Object*>(obj));
   }
 
+}
+
+extern "C" long __id__(rubinius::Object* obj) {
+  long id = obj->id(rubinius::VM::current())->to_native();
+  printf("Object: %p, id: %ld\n", obj, id);
+  return id;
 }

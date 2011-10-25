@@ -2,7 +2,7 @@ class String
   include Enumerable
 
   alias_method :each, :each_line
-  
+
   # Treats leading characters from <i>self</i> as a string of hexadecimal digits
   # (with an optional sign and an optional <code>0x</code>) and returns the
   # corresponding number. Zero is returned on error.
@@ -47,7 +47,7 @@ class String
     @data.reverse(0, @num_bytes)
     self
   end
-  
+
   # Deletes the specified portion from <i>self</i>, and returns the portion
   # deleted. The forms that take a <code>Fixnum</code> will raise an
   # <code>IndexError</code> if the value is out of range; the <code>Range</code>
@@ -89,6 +89,30 @@ class String
     result
   end
 
+  # Squeezes <i>self</i> in place, returning either <i>self</i>, or
+  # <code>nil</code> if no changes were made.
+  def squeeze!(*strings)
+    return if @num_bytes == 0
+    self.modify!
+
+    table = count_table(*strings).__data__
+
+    i, j, last = 1, 0, @data[0]
+    while i < @num_bytes
+      c = @data[i]
+      unless c == last and table[c] == 1
+        @data[j+=1] = last = c
+      end
+      i += 1
+    end
+
+    if (j += 1) < @num_bytes
+      @num_bytes = j
+      self
+    else
+      nil
+    end
+  end
 
   # Performs the substitutions of <code>String#sub</code> in place,
   # returning <i>self</i>, or <code>nil</code> if no substitutions were
@@ -490,4 +514,165 @@ class String
 
     return self
   end
+
+  # Replaces the contents and taintedness of <i>string</i> with the corresponding
+  # values in <i>other</i>.
+  #
+  #   s = "hello"         #=> "hello"
+  #   s.replace "world"   #=> "world"
+  def replace(other)
+    # If we're replacing with ourselves, then we have nothing to do
+    return self if equal?(other)
+
+    Rubinius.check_frozen
+
+    other = StringValue(other)
+
+    @shared = true
+    other.shared!
+    @data = other.__data__
+    @num_bytes = other.num_bytes
+    @hash_value = nil
+
+    taint if other.tainted?
+
+    self
+  end
+  alias_method :initialize_copy, :replace
+  # private :initialize_copy
+
+  # Returns a new string with the characters from <i>self</i> in reverse order.
+  #
+  #   "stressed".reverse   #=> "desserts"
+
+  # Append --- Concatenates the given object to <i>self</i>. If the object is a
+  # <code>Fixnum</code> between 0 and 255, it is converted to a character before
+  # concatenation.
+  #
+  #   a = "hello "
+  #   a << "world"   #=> "hello world"
+  #   a.concat(33)   #=> "hello world!"
+  def <<(other)
+    modify!
+
+    unless other.kind_of? String
+      if other.kind_of?(Integer) && other >= 0 && other <= 255
+        other = other.chr
+      else
+        other = StringValue(other)
+      end
+    end
+
+    taint if other.tainted?
+    append(other)
+  end
+  alias_method :concat, :<<
+
+  # Splits <i>self</i> using the supplied parameter as the record separator
+  # (<code>$/</code> by default), passing each substring in turn to the supplied
+  # block. If a zero-length record separator is supplied, the string is split on
+  # <code>\n</code> characters, except that multiple successive newlines are
+  # appended together.
+  #
+  #   print "Example one\n"
+  #   "hello\nworld".each { |s| p s }
+  #   print "Example two\n"
+  #   "hello\nworld".each('l') { |s| p s }
+  #   print "Example three\n"
+  #   "hello\n\n\nworld".each('') { |s| p s }
+  #
+  # <em>produces:</em>
+  #
+  #   Example one
+  #   "hello\n"
+  #   "world"
+  #   Example two
+  #   "hel"
+  #   "l"
+  #   "o\nworl"
+  #   "d"
+  #   Example three
+  #   "hello\n\n\n"
+  #   "world"
+  def each_line(sep=$/)
+    return to_enum(:each_line, sep) unless block_given?
+
+    # weird edge case.
+    if sep.nil?
+      yield self
+      return self
+    end
+
+    sep = StringValue(sep)
+
+    pos = 0
+
+    size = @num_bytes
+    orig_data = @data
+
+    # If the separator is empty, we're actually in paragraph mode. This
+    # is used so infrequently, we'll handle it completely separately from
+    # normal line breaking.
+    if sep.empty?
+      sep = "\n\n"
+      pat_size = 2
+
+      while pos < size
+        nxt = find_string(sep, pos)
+        break unless nxt
+
+        while @data[nxt] == 10 and nxt < @num_bytes
+          nxt += 1
+        end
+
+        match_size = nxt - pos
+
+        # string ends with \n's
+        break if pos == @num_bytes
+
+        str = substring(pos, match_size)
+        yield str unless str.empty?
+
+        # detect mutation within the block
+        if !@data.equal?(orig_data) or @num_bytes != size
+          raise RuntimeError, "string modified while iterating"
+        end
+
+        pos = nxt
+      end
+
+      # No more separates, but we need to grab the last part still.
+      fin = substring(pos, @num_bytes - pos)
+      yield fin if fin and !fin.empty?
+
+    else
+
+      # This is the normal case.
+      pat_size = sep.size
+
+      while pos < size
+        nxt = find_string(sep, pos)
+        break unless nxt
+
+        match_size = nxt - pos
+        str = substring(pos, match_size + pat_size)
+        yield str unless str.empty?
+
+        # detect mutation within the block
+        if !@data.equal?(orig_data) or @num_bytes != size
+          raise RuntimeError, "string modified while iterating"
+        end
+
+        pos = nxt + pat_size
+      end
+
+      # No more separates, but we need to grab the last part still.
+      fin = substring(pos, @num_bytes - pos)
+      yield fin unless fin.empty?
+    end
+
+    self
+  end
+
+  alias_method :lines, :each_line
 end

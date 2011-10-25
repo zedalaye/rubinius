@@ -110,7 +110,7 @@ class IO
   # opened for reading or an IOError will be raised.
   #
   #  f = File.new("testfile")
-  #  f.each {|line| puts "#{f.lineno}: #{line}" }
+  #  f.each { |line| puts "#{f.lineno}: #{line}" }
   # produces:
   #
   #  1: This is line one
@@ -156,5 +156,165 @@ class IO
     end
 
     $_ = line
+  end
+
+  ##
+  # Writes the given objects to ios as with IO#print.
+  # Writes a record separator (typically a newline)
+  # after any that do not already end with a newline
+  # sequence. If called with an array argument, writes
+  # each element on a new line. If called without arguments,
+  # outputs a single record separator.
+  #
+  #  $stdout.puts("this", "is", "a", "test")
+  # produces:
+  #
+  #  this
+  #  is
+  #  a
+  #  test
+  def puts(*args)
+    if args.empty?
+      write DEFAULT_RECORD_SEPARATOR
+    else
+      args.each do |arg|
+        if arg.equal? nil
+          str = "nil"
+        elsif Thread.guarding? arg
+          str = "[...]"
+        elsif arg.kind_of?(Array)
+          Thread.recursion_guard arg do
+            arg.each do |a|
+              puts a
+            end
+          end
+        else
+          str = arg.to_s
+        end
+
+        if str
+          write str
+          write DEFAULT_RECORD_SEPARATOR unless str.suffix?(DEFAULT_RECORD_SEPARATOR)
+        end
+      end
+    end
+
+    nil
+  end
+
+  ##
+  # Runs the specified command string as a subprocess;
+  # the subprocess‘s standard input and output will be
+  # connected to the returned IO object. If cmd_string
+  # starts with a ``-’’, then a new instance of Ruby is
+  # started as the subprocess. The default mode for the
+  # new file object is ``r’’, but mode may be set to any
+  # of the modes listed in the description for class IO.
+  #
+  # If a block is given, Ruby will run the command as a
+  # child connected to Ruby with a pipe. Ruby‘s end of
+  # the pipe will be passed as a parameter to the block.
+  # At the end of block, Ruby close the pipe and sets $?.
+  # In this case IO::popen returns the value of the block.
+  #
+  # If a block is given with a cmd_string of ``-’’, the
+  # block will be run in two separate processes: once in
+  # the parent, and once in a child. The parent process
+  # will be passed the pipe object as a parameter to the
+  # block, the child version of the block will be passed
+  # nil, and the child‘s standard in and standard out will
+  # be connected to the parent through the pipe.
+  # Not available on all platforms.
+  #
+  #  f = IO.popen("uname")
+  #  p f.readlines
+  #  puts "Parent is #{Process.pid}"
+  #  IO.popen ("date") { |f| puts f.gets }
+  #  IO.popen("-") { |f| $stderr.puts "#{Process.pid} is here, f is #{f}"}
+  #  p $?
+  # produces:
+  #
+  #  ["Linux\n"]
+  #  Parent is 26166
+  #  Wed Apr  9 08:53:52 CDT 2003
+  #  26169 is here, f is
+  #  26166 is here, f is #<IO:0x401b3d44>
+  #  #<Process::Status: pid=26166,exited(0)>
+  def self.popen(str, mode="r")
+    mode = parse_mode mode
+
+    readable = false
+    writable = false
+
+    if mode & IO::RDWR != 0
+      readable = true
+      writable = true
+    elsif mode & IO::WRONLY != 0
+      writable = true
+    else # IO::RDONLY
+      readable = true
+    end
+
+    pa_read, ch_write = pipe if readable
+    ch_read, pa_write = pipe if writable
+
+    pid = Process.fork
+
+    # child
+    if !pid
+      if readable
+        pa_read.close
+        STDOUT.reopen ch_write
+      end
+
+      if writable
+        pa_write.close
+        STDIN.reopen ch_read
+      end
+
+      if str == "-"
+        if block_given?
+          yield nil
+          exit! 0
+        else
+          return nil
+        end
+      else
+        Process.perform_exec "/bin/sh", ["sh", "-c", str]
+      end
+    end
+
+    ch_write.close if readable
+    ch_read.close  if writable
+
+    # We only need the Bidirectional pipe if we're reading and writing.
+    # If we're only doing one, we can just return the IO object for
+    # the proper half.
+    #
+    if readable and writable
+      # Transmogrify pa_read into a BidirectionalPipe object,
+      # and then tell it abou it's pid and pa_write
+
+      Rubinius::Unsafe.set_class pa_read, IO::BidirectionalPipe
+
+      pipe = pa_read
+      pipe.set_pipe_info(pa_write)
+    elsif readable
+      pipe = pa_read
+    elsif writable
+      pipe = pa_write
+    else
+      raise ArgumentError, "IO is neither readable nor writable"
+    end
+
+    pipe.pid = pid
+
+    return pipe unless block_given?
+
+    begin
+      yield pipe
+    ensure
+      pipe.close unless pipe.closed?
+    end
   end
 end

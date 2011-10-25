@@ -6,8 +6,8 @@ namespace offsets {
     int recv = 0x8;
     int block = 0x10;
     int total = 0x18;
-    int arguments = 0x1c;
-    int tuple = 0x24;
+    int arguments = 0x20;
+    int tuple = 0x28;
   }
 
   namespace CallFrame {

@@ -88,29 +88,6 @@ class String
     r
   end
 
-  # Append --- Concatenates the given object to <i>self</i>. If the object is a
-  # <code>Fixnum</code> between 0 and 255, it is converted to a character before
-  # concatenation.
-  #
-  #   a = "hello "
-  #   a << "world"   #=> "hello world"
-  #   a.concat(33)   #=> "hello world!"
-  def <<(other)
-    modify!
-
-    unless other.kind_of? String
-      if other.kind_of?(Integer) && other >= 0 && other <= 255
-        other = other.chr
-      else
-        other = StringValue(other)
-      end
-    end
-
-    taint if other.tainted?
-    append(other)
-  end
-  alias_method :concat, :<<
-
   # call-seq:
   #   str <=> other_str   => -1, 0, +1
   #
@@ -232,13 +209,12 @@ class String
   #    a["bye"]               #=> nil
   def [](index, other = undefined)
     unless other.equal?(undefined)
-      length = Rubinius::Type.coerce_to(other, Fixnum, :to_int)
-
       if index.kind_of? Regexp
-        match, str = subpattern(index, length)
+        match, str = subpattern(index, other)
         Regexp.last_match = match
         return str
       else
+        length = Rubinius::Type.coerce_to(other, Fixnum, :to_int)
         start  = Rubinius::Type.coerce_to(index, Fixnum, :to_int)
         return substring(start, length)
       end
@@ -645,7 +621,7 @@ class String
 
   # Passes each byte in <i>self</i> to the given block.
   #
-  #   "hello".each_byte {|c| print c, ' ' }
+  #   "hello".each_byte { |c| print c, ' ' }
   #
   # <em>produces:</em>
   #
@@ -669,11 +645,11 @@ class String
   # appended together.
   #
   #   print "Example one\n"
-  #   "hello\nworld".each {|s| p s}
+  #   "hello\nworld".each { |s| p s }
   #   print "Example two\n"
-  #   "hello\nworld".each('l') {|s| p s}
+  #   "hello\nworld".each('l') { |s| p s }
   #   print "Example three\n"
-  #   "hello\n\n\nworld".each('') {|s| p s}
+  #   "hello\n\n\nworld".each('') { |s| p s }
   #
   # <em>produces:</em>
   #
@@ -827,7 +803,7 @@ class String
   #
   #   "hello".gsub(/[aeiou]/, '*')              #=> "h*ll*"
   #   "hello".gsub(/([aeiou])/, '<\1>')         #=> "h<e>ll<o>"
-  #   "hello".gsub(/./) {|s| s[0].to_s + ' '}   #=> "104 101 108 108 111 "
+  #   "hello".gsub(/./) { |s| s[0].to_s + ' ' } #=> "104 101 108 108 111 "
   def gsub(pattern, replacement=undefined)
     unless block_given? or replacement != undefined
       return to_enum(:gsub, pattern, replacement)
@@ -850,7 +826,7 @@ class String
 
     last_end = 0
     offset = nil
-    ret = substring(0,0) # Empty string and string subclass
+    ret = substring(0, 0) # Empty string and string subclass
 
     last_match = nil
     match = pattern.match_from self, last_end
@@ -955,7 +931,7 @@ class String
 
     last_match = nil
 
-    ret = substring(0,0) # Empty string and string subclass
+    ret = substring(0, 0) # Empty string and string subclass
     offset = match.begin 0 if match
 
     while match
@@ -1184,35 +1160,6 @@ class String
     to_inum(-8, false)
   end
 
-  # Replaces the contents and taintedness of <i>string</i> with the corresponding
-  # values in <i>other</i>.
-  #
-  #   s = "hello"         #=> "hello"
-  #   s.replace "world"   #=> "world"
-  def replace(other)
-    # If we're replacing with ourselves, then we have nothing to do
-    return self if equal?(other)
-
-    Rubinius.check_frozen
-
-    other = StringValue(other)
-
-    @shared = true
-    other.shared!
-    @data = other.__data__
-    @num_bytes = other.num_bytes
-    @hash_value = nil
-
-    taint if other.tainted?
-
-    self
-  end
-  alias_method :initialize_copy, :replace
-  # private :initialize_copy
-
-  # Returns a new string with the characters from <i>self</i> in reverse order.
-  #
-  #   "stressed".reverse   #=> "desserts"
   def reverse
     dup.reverse!
   end
@@ -1379,9 +1326,9 @@ class String
   #
   # And the block form:
   #
-  #   a.scan(/\w+/) {|w| print "<<#{w}>> " }
+  #   a.scan(/\w+/) { |w| print "<<#{w}>> " }
   #   print "\n"
-  #   a.scan(/(.)(.)/) {|x,y| print y, x }
+  #   a.scan(/(.)(.)/) { |x,y| print y, x }
   #   print "\n"
   #
   # <em>produces:</em>
@@ -1434,6 +1381,12 @@ class String
   # This method is specifically part of 1.9 but we enable it in 1.8 also
   # because we need it internally.
   def setbyte(index, byte)
+    unless byte.instance_of?(Fixnum)
+      raise TypeError, "can't convert #{byte.class} into Integer"
+    end
+
+    Rubinius.check_frozen
+
     index = size + index if index < 0
     @data[index] = byte
   end
@@ -1651,31 +1604,6 @@ class String
     str.squeeze!(*strings) || str
   end
 
-  # Squeezes <i>self</i> in place, returning either <i>self</i>, or
-  # <code>nil</code> if no changes were made.
-  def squeeze!(*strings)
-    return if @num_bytes == 0
-    self.modify!
-
-    table = count_table(*strings).__data__
-
-    i, j, last = 1, 0, @data[0]
-    while i < @num_bytes
-      c = @data[i]
-      unless c == last and table[c] == 1
-        @data[j+=1] = last = c
-      end
-      i += 1
-    end
-
-    if (j += 1) < @num_bytes
-      @num_bytes = j
-      self
-    else
-      nil
-    end
-  end
-
   def start_with?(*prefixes)
     prefixes.each do |prefix|
       prefix = Rubinius::Type.check_convert_type prefix, String, :to_str
@@ -1724,7 +1652,7 @@ class String
   #
   #   "hello".sub(/[aeiou]/, '*')               #=> "h*llo"
   #   "hello".sub(/([aeiou])/, '<\1>')          #=> "h<e>llo"
-  #   "hello".sub(/./) {|s| s[0].to_s + ' ' }   #=> "104 ello"
+  #   "hello".sub(/./) { |s| s[0].to_s + ' ' }  #=> "104 ello"
   def sub(pattern, replacement=undefined)
     if replacement.equal?(undefined) and !block_given?
       raise ArgumentError, "wrong number of arguments (1 for 2)"
@@ -2166,23 +2094,20 @@ class String
   end
 
   def subpattern(pattern, capture)
-    # TODO: A part of the functionality here should go into MatchData#[]
     match = pattern.match(self)
-    if !match or capture >= match.size
-      return nil
+
+    return nil unless match
+
+    if index = Rubinius::Type.check_convert_type(capture, Fixnum, :to_int)
+      return nil if index >= match.size || -index >= match.size
+      capture = index
     end
 
-    if capture < 0
-      capture += match.size
-      return nil if capture <= 0
-    end
-
-    start = match.begin(capture)
-    count = match.end(capture) - match.begin(capture)
-    str = self.substring(start, count)
+    str = match[capture]
     str.taint if pattern.tainted?
     [match, str]
   end
+  private :subpattern
 
   def subpattern_set(pattern, capture, replacement)
     unless match = pattern.match(self)

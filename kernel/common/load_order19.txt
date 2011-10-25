@@ -2,6 +2,7 @@ basicobject.rbc
 class.rbc
 binding.rbc
 proc.rbc
+proc19.rbc
 autoload.rbc
 module.rbc
 module19.rbc
@@ -53,7 +54,6 @@ delegated_method.rbc
 fixnum.rbc
 fixnum19.rbc
 dir.rbc
-dir19.rbc
 lrucache.rbc
 dir_glob.rbc
 encoding.rbc
@@ -68,6 +68,7 @@ io.rbc
 io19.rbc
 file.rbc
 file19.rbc
+dir19.rbc
 filetest.rbc
 float.rbc
 float19.rbc
@@ -110,4 +111,3 @@ variable_scope.rbc
 capi.rbc
 complex.rbc
 rational.rbc
-rational19.rbc
