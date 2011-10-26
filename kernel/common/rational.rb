@@ -32,7 +32,7 @@ def Rational(a, b = 1)
   if a.kind_of?(Rational) && b == 1
     a
   else
-    Rational.reduce(a, b)
+    Rational.send :convert, a, b
   end
 end
 
@@ -46,7 +46,6 @@ end
 #
 # To create a Rational Number:
 #   Rational(a,b)             # -> a/b
-#   Rational.new!(a,b)        # -> a/b
 #
 # Examples:
 #   Rational(5,6)             # -> 5/6
@@ -55,64 +54,86 @@ end
 # Rational numbers are reduced to their lowest terms:
 #   Rational(6,10)            # -> 3/5
 #
-# But not if you use the unusual method "new!":
-#   Rational.new!(6,10)       # -> 6/10
-#
 # Division by zero is obviously not allowed:
 #   Rational(3,0)             # -> ZeroDivisionError
 #
 class Rational < Numeric
-  @RCS_ID='-$Id: rational.rb,v 1.7 1999/08/24 12:49:28 keiju Exp keiju $-'
-
-  #
-  # Reduces the given numerator and denominator to their lowest terms.  Use
-  # Rational() instead.
-  #
-  def Rational.reduce(num, den = 1)
-    raise ZeroDivisionError, "denominator is zero" if den == 0
-
-    if den < 0
-      num = -num
-      den = -den
-    end
-    if num.kind_of?(Integer) && den.kind_of?(Integer)
-      gcd = num.gcd(den)
-      num = num.div(gcd)
-      den = den.div(gcd)
-    end
-    if den == 1 && defined?(Unify)
-      num
-    else
-      new!(num, den)
-    end
-  end
-
-  #
-  # Implements the constructor.  This method does not reduce to lowest terms or
-  # check for division by zero.  Therefore #Rational() should be preferred in
-  # normal use.
-  #
-  def Rational.new!(num, den = 1)
-    new(num, den)
-  end
 
   private_class_method :new
+
+  def self.convert(num, den)
+    if num.equal? nil or den.equal? nil
+      raise TypeError, "cannot convert nil into Rational"
+    end
+
+    case num
+    when Integer
+      # nothing
+    when Float, String, Complex
+      num = num.to_r
+    end
+
+    case den
+    when Integer
+      # nothing
+    when Float, String, Complex
+      den = den.to_r
+    end
+
+    if num.kind_of? Integer and den.kind_of? Integer
+      return new(num, den)
+    end
+
+    if den.equal? 1 and !num.kind_of? Integer
+      return Rubinius::Type.coerce_to num, Rational, :to_r
+    else
+      if num.kind_of? Numeric and den.kind_of? Numeric and
+         !(num.kind_of? Integer and den.kind_of? Integer)
+        return num / den
+      end
+    end
+
+    new num, den
+  end
+
+  private_class_method :convert
 
   #
   # This method is actually private.
   #
   def initialize(num, den)
-    if den < 0
-      num = -num
-      den = -den
-    end
-    if num.kind_of?(Integer) and den.kind_of?(Integer)
-      @numerator = num
-      @denominator = den
+    case num
+    when Integer
+      # nothing
+    when Numeric
+      num = num.to_i
     else
-      @numerator = num.to_i
-      @denominator = den.to_i
+      raise TypeError, "numerator is not an Integer"
     end
+
+    case den
+    when Integer
+      if den == 0
+        raise ZeroDivisionError, "divided by 0"
+      elsif den < 0
+        num = -num
+        den = -den
+      end
+
+      if den == 1
+        @numerator = num
+        @denominator = den
+        return
+      end
+    when Numeric
+      den = den.to_i
+    else
+      raise TypeError, "denominator is not an Integer"
+    end
+
+    gcd = num.gcd den
+    @numerator = num.div gcd
+    @denominator = den.div gcd
   end
 
   #
@@ -129,7 +150,7 @@ class Rational < Numeric
       num_a = a.numerator * @denominator
       Rational(num + num_a, @denominator * a.denominator)
     elsif a.kind_of?(Integer)
-      self + Rational.new!(a, 1)
+      self + Rational(a, 1)
     elsif a.kind_of?(Float)
       Float(self) + a
     else
@@ -153,7 +174,7 @@ class Rational < Numeric
       num_a = a.numerator * @denominator
       Rational(num - num_a, @denominator*a.denominator)
     elsif a.kind_of?(Integer)
-      self - Rational.new!(a, 1)
+      self - Rational(a, 1)
     elsif a.kind_of?(Float)
       Float(self) - a
     else
@@ -178,7 +199,7 @@ class Rational < Numeric
       den = @denominator * a.denominator
       Rational(num, den)
     elsif a.kind_of?(Integer)
-      self * Rational.new!(a, 1)
+      self * Rational(a, 1)
     elsif a.kind_of?(Float)
       Float(self) * a
     else
@@ -201,7 +222,7 @@ class Rational < Numeric
       Rational(num, den)
     elsif a.kind_of?(Integer)
       raise ZeroDivisionError, "division by zero" if a == 0
-      self / Rational.new!(a, 1)
+      self / Rational(a, 1)
     elsif a.kind_of?(Float)
       Float(self) / a
     else
@@ -222,8 +243,14 @@ class Rational < Numeric
   #
   def ** (other)
     if other.kind_of?(Rational)
+      if self == 0 && other < 0 && other.denominator == 1
+        raise ZeroDivisionError, "divided by 0"
+      end
       Float(self) ** other
     elsif other.kind_of?(Integer)
+      if self == 0 && other < 0
+        raise ZeroDivisionError, "divided by 0"
+      end
       if other > 0
         num = @numerator ** other
         den = @denominator ** other
@@ -234,7 +261,7 @@ class Rational < Numeric
         num = 1
         den = 1
       end
-      Rational.new!(num, den)
+      Rational(num, den)
     elsif other.kind_of?(Float)
       Float(self) ** other
     else
@@ -287,7 +314,7 @@ class Rational < Numeric
     if @numerator > 0
       self
     else
-      Rational.new!(-@numerator, @denominator)
+      Rational(-@numerator, @denominator)
     end
   end
 
@@ -296,15 +323,12 @@ class Rational < Numeric
   #
   # But beware:
   #   Rational(1,2) == Rational(4,8)          # -> true
-  #   Rational(1,2) == Rational.new!(4,8)     # -> false
-  #
-  # Don't use Rational.new!
   #
   def == (other)
     if other.kind_of?(Rational)
       @numerator == other.numerator and (@denominator == other.denominator or @numerator.zero?)
     elsif other.kind_of?(Integer)
-      self == Rational.new!(other, 1)
+      self == Rational(other, 1)
     elsif other.kind_of?(Float)
       Float(self) == other
     else
@@ -328,7 +352,7 @@ class Rational < Numeric
         return 0
       end
     elsif other.kind_of?(Integer)
-      return self <=> Rational.new!(other, 1)
+      return self <=> Rational(other, 1)
     elsif other.kind_of?(Float)
       return Float(self) <=> other
     elsif defined? other.coerce
@@ -343,7 +367,7 @@ class Rational < Numeric
     if other.kind_of?(Float)
       return other, self.to_f
     elsif other.kind_of?(Integer)
-      return Rational.new!(other, 1), self
+      return Rational(other, 1), self
     else
       super
     end
@@ -438,91 +462,12 @@ class Rational < Numeric
   private :initialize
 end
 
-class Integer
-  #
-  # In an integer, the value _is_ the numerator of its rational equivalent.
-  # Therefore, this method returns +self+.
-  #
-  def numerator
-    self
-  end
-
-  #
-  # In an integer, the denominator is 1.  Therefore, this method returns 1.
-  #
-  def denominator
-    1
-  end
-
-  #
-  # Returns a Rational representation of this integer.
-  #
-  def to_r
-    Rational(self, 1)
-  end
-
-  #
-  # Returns the <em>greatest common denominator</em> of the two numbers (+self+
-  # and +n+).
-  #
-  # Examples:
-  #   72.gcd 168           # -> 24
-  #   19.gcd 36            # -> 1
-  #
-  # The result is positive, no matter the sign of the arguments.
-  #
-  def gcd(other)
-    raise TypeError, "Expected Integer but got #{other.class}" unless other.kind_of?(Integer)
-    min = self.abs
-    max = other.abs
-    while min > 0
-      tmp = min
-      min = max % min
-      max = tmp
-    end
-    max
-  end
-
-  #
-  # Returns the <em>lowest common multiple</em> (LCM) of the two arguments
-  # (+self+ and +other+).
-  #
-  # Examples:
-  #   6.lcm 7        # -> 42
-  #   6.lcm 9        # -> 18
-  #
-  def lcm(other)
-    if self.zero? or other.zero?
-      0
-    else
-      (self.div(self.gcd(other)) * other).abs
-    end
-  end
-
-  #
-  # Returns the GCD _and_ the LCM (see #gcd and #lcm) of the two arguments
-  # (+self+ and +other+).  This is more efficient than calculating them
-  # separately.
-  #
-  # Example:
-  #   6.gcdlcm 9     # -> [3, 18]
-  #
-  def gcdlcm(other)
-    gcd = self.gcd(other)
-    if self.zero? or other.zero?
-      [gcd, 0]
-    else
-      [gcd, (self.div(gcd) * other).abs]
-    end
-  end
-end
-
 class Fixnum
   remove_method :quo
 
   # If Rational is defined, returns a Rational number instead of a Fixnum.
   def quo(other)
-    Rational.new!(self, 1) / other
+    Rational(self, 1) / other
   end
   alias rdiv quo
 
@@ -531,7 +476,7 @@ class Fixnum
     if other >= 0
       self.power!(other)
     else
-      Rational.new!(self, 1)**other
+      Rational(self, 1)**other
     end
   end
 end
@@ -541,7 +486,7 @@ class Bignum
 
   # If Rational is defined, returns a Rational number instead of a Float.
   def quo(other)
-    Rational.new!(self, 1) / other
+    Rational(self, 1) / other
   end
   alias rdiv quo
 
@@ -550,7 +495,7 @@ class Bignum
     if other >= 0
       self.power!(other)
     else
-      Rational.new!(self, 1)**other
+      Rational(self, 1)**other
     end
   end
 end

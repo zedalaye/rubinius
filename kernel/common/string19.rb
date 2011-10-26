@@ -51,13 +51,15 @@ class String
         current += 1
       end
     else
-      after_stop = exclusive ? stop : stop.succ
-      current = self
+      unless stop.size < size
+        after_stop = exclusive ? stop : stop.succ
+        current = self
 
-      until current == after_stop
-        yield current
-        current = StringValue(current.succ)
-        break if current.size > stop.size || current.size == 0
+        until current == after_stop
+          yield current
+          current = StringValue(current.succ)
+          break if current.size > stop.size || current.size == 0
+        end
       end
     end
     self
@@ -273,21 +275,7 @@ class String
   alias_method :next!, :succ!
 
   def to_r
-    return Rational(0,1) if empty?
-
-    clean       = strip
-    numerator   = clean.gsub(".", "").to_i
-    denominator = 1
-
-    if clean.match(/\d\.\d/)
-      denominator = 10**clean.split(".")[1].to_i.to_s.length
-    end
-
-    if clean.match(/\d\/\d/)
-      denominator *= clean.split("/")[1].to_i
-    end
-
-    return Rational(numerator, denominator)
+    Rationalizer.new(self).convert
   end
 
   ##
@@ -617,10 +605,12 @@ class String
     modify!
 
     unless other.kind_of? String
-      if other.kind_of?(Integer) && other >= 0 && other <= 255
-        other = other.chr
-      elsif other.kind_of?(Integer) && other < 0
-        raise RangeError, "negative argument"
+      if other.kind_of? Integer
+        if other >= 0 and other <= 255
+          other = other.chr
+        else
+          raise RangeError, "negative value for character"
+        end
       else
         other = StringValue(other)
       end
@@ -643,4 +633,107 @@ class String
     end
   end
 
+  # Splits <i>self</i> using the supplied parameter as the record separator
+  # (<code>$/</code> by default), passing each substring in turn to the supplied
+  # block. If a zero-length record separator is supplied, the string is split on
+  # <code>\n</code> characters, except that multiple successive newlines are
+  # appended together.
+  #
+  #   print "Example one\n"
+  #   "hello\nworld".each { |s| p s }
+  #   print "Example two\n"
+  #   "hello\nworld".each('l') { |s| p s }
+  #   print "Example three\n"
+  #   "hello\n\n\nworld".each('') { |s| p s }
+  #
+  # <em>produces:</em>
+  #
+  #   Example one
+  #   "hello\n"
+  #   "world"
+  #   Example two
+  #   "hel"
+  #   "l"
+  #   "o\nworl"
+  #   "d"
+  #   Example three
+  #   "hello\n\n\n"
+  #   "world"
+  def each_line(sep=$/)
+    return to_enum(:each_line, sep) unless block_given?
+
+    # weird edge case.
+    if sep.nil?
+      yield self
+      return self
+    end
+
+    sep = StringValue(sep)
+
+    pos = 0
+
+    size = @num_bytes
+    orig_data = @data
+
+    # If the separator is empty, we're actually in paragraph mode. This
+    # is used so infrequently, we'll handle it completely separately from
+    # normal line breaking.
+    if sep.empty?
+      sep = "\n\n"
+      pat_size = 2
+
+      while pos < size
+        nxt = find_string(sep, pos)
+        break unless nxt
+
+        while @data[nxt] == 10 and nxt < @num_bytes
+          nxt += 1
+        end
+
+        match_size = nxt - pos
+
+        # string ends with \n's
+        break if pos == @num_bytes
+
+        str = substring(pos, match_size)
+        yield str unless str.empty?
+
+        # detect mutation within the block
+        if !@data.equal?(orig_data) or @num_bytes != size
+          raise RuntimeError, "string modified while iterating"
+        end
+
+        pos = nxt
+      end
+
+      # No more separates, but we need to grab the last part still.
+      fin = substring(pos, @num_bytes - pos)
+      yield fin if fin and !fin.empty?
+
+    else
+
+      # This is the normal case.
+      pat_size = sep.size
+      unmodified_self = clone
+
+      while pos < size
+        nxt = unmodified_self.find_string(sep, pos)
+        break unless nxt
+
+        match_size = nxt - pos
+        str = unmodified_self.substring(pos, match_size + pat_size)
+        yield str unless str.empty?
+
+        pos = nxt + pat_size
+      end
+
+      # No more separates, but we need to grab the last part still.
+      fin = unmodified_self.substring(pos, @num_bytes - pos)
+      yield fin unless fin.empty?
+    end
+
+    self
+  end
+
+  alias_method :lines, :each_line
 end

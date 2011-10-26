@@ -7,6 +7,18 @@ module Kernel
     end.send(:define_method, *args, &block)
   end
 
+  def loop
+    return to_enum(:loop) unless block_given?
+
+    begin
+      while true
+        yield
+      end
+    rescue StopIteration
+    end
+  end
+  module_function :loop
+
   def Integer(obj, base=nil)
     if obj.kind_of? String
       if obj.empty?
@@ -112,4 +124,43 @@ module Kernel
     return str
   end
   module_function :String
+  
+  def Array(obj)
+    ary = Rubinius::Type.check_convert_type obj, Array, :to_ary
+
+    return ary if ary
+
+    if obj.respond_to?(:to_a) && array = Rubinius::Type.check_convert_type(obj, Array, :to_a)
+      array
+    else
+      [obj]
+    end
+  end
+  module_function :Array
+
+  def =~(other)
+    nil
+  end
+  
+  def Float(obj)
+    raise TypeError, "can't convert nil into Float" if obj.nil?
+
+    case obj
+    when Float
+      obj
+    when String
+      valid_re = /^\s*[+-]?((\d+_?)*\d+(\.(\d+_?)*\d+)?|\.(\d+_?)*\d+)(\s*|([eE][+-]?(\d+_?)*\d+)\s*)$/
+
+      m = valid_re.match(obj)
+
+      if !m or !m.pre_match.empty? or !m.post_match.empty?
+        raise ArgumentError, "invalid value for Float(): #{obj.inspect}"
+      end
+      obj.convert_float
+    else
+      Rubinius::Type.coerce_to(obj, Float, :to_f)
+    end
+  end
+  module_function :Float
+  
 end
