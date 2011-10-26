@@ -32,6 +32,8 @@
 #include "jit/tier1/compiler.hpp"
 #include "configuration.hpp"
 
+#include "vm/llvm/state.hpp"
+
 namespace rubinius {
 
   Class* Object::class_object(STATE) const {

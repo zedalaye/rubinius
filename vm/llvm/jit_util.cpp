@@ -1053,6 +1053,14 @@ extern "C" {
     return Qnil;
   }
 
+  Object* rbx_literals_at(STATE, CallFrame* call_frame, int which) {
+    CPP_TRY
+
+    return call_frame->cm->literals()->at_prim(state, Fixnum::from(which));
+
+    CPP_CATCH
+  }
+
   Object* rbx_shift_array(STATE, CallFrame* call_frame, Object** loc) {
     CPP_TRY
 

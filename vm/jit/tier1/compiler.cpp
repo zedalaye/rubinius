@@ -16,6 +16,9 @@ extern "C" void* rbx_prologue_check2();
 extern "C" void* rbx_flush_scope();
 extern "C" void* rbx_check_frozen();
 extern "C" void* rbx_meta_to_s();
+extern "C" void* rbx_literals_at();
+extern "C" void* rbx_string_dup();
+extern "C" void* rbx_string_build();
 
 namespace rubinius {
 namespace tier1 {
@@ -326,7 +329,7 @@ namespace tier1 {
       return p(stack_ptr, -cPointerSize * offset);
     }
 
-    void load_stack_top(AsmJit::GPReg& reg) {
+    void load_stack_top(const AsmJit::GPReg& reg) {
       _.mov(reg, stack_top_ptr());
     }
 
@@ -388,8 +391,12 @@ namespace tier1 {
       _.mov(p(stack_ptr), (sysint_t)obj);
     }
 
-    void push_reg(AsmJit::GPReg& reg) {
+    void push_reg(const AsmJit::GPReg& reg) {
       _.add(stack_ptr, cPointerSize);
+      _.mov(p(stack_ptr), reg);
+    }
+
+    void set_stack_top(const AsmJit::GPReg& reg) {
       _.mov(p(stack_ptr), reg);
     }
 
@@ -472,6 +479,17 @@ namespace tier1 {
       _.call((void*)rbx_check_frozen);
     }
 
+    void call_and_check(void* func, int clear=0) {
+      _.call(func);
+      if(clear > 0) {
+        _.sub(stack_ptr, clear * cPointerSize);
+      }
+      _.cmp(rax, 0);
+      _.je(exit_label);
+    }
+
+    void visit_allow_private() { }
+
     void visit_meta_to_s(opcode name) {
       InlineCache* cache = reinterpret_cast<InlineCache*>(name);
 
@@ -479,10 +497,36 @@ namespace tier1 {
       load_callframe(arg2);
       _.mov(arg3, (sysint_t)cache);
       _.mov(arg4, p(stack_ptr));
-      _.call((void*)rbx_meta_to_s);
-      _.cmp(rax, 0);
-      _.je(exit_label);
-      _.mov(p(stack_ptr), rax);
+      call_and_check((void*)rbx_meta_to_s);
+      set_stack_top(rax);
+    }
+
+    void visit_push_literal(opcode which) {
+      load_vm(arg1);
+      load_callframe(arg2);
+      _.mov(arg3, which);
+      call_and_check((void*)rbx_literals_at);
+      push_reg(rax);
+    }
+
+    void visit_string_dup() {
+      load_vm(arg1);
+      load_callframe(arg2);
+      load_stack_top(arg3);
+      call_and_check((void*)rbx_string_dup);
+      set_stack_top(rax);
+    }
+
+    void visit_string_build(opcode count) {
+      load_vm(arg1);
+      load_callframe(arg2);
+      _.mov(arg3, count);
+
+      _.mov(arg4, stack_ptr);
+      _.sub(arg4, (count - 1) * cPointerSize);
+
+      call_and_check((void*)rbx_string_build, count - 1);
+      set_stack_top(rax);
     }
 
   };
